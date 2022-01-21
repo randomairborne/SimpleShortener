@@ -11,20 +11,28 @@ static INSTANCE: OnceCell<Config> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
-    // initialize tracing
-    tracing_subscriber::fmt::init();
-
+    let mut args: Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        args.push(String::from("./config.json"))
+    };
+    println!("Reading config {}", &args[1]);
+    let config_string = match std::fs::read_to_string(&args[1]) {
+        Ok(config_string) => config_string,
+        Err(e) => panic!("{}", e),
+    };
     // get config
-    let config =
-        serde_json::from_str::<Config>(std::fs::read_to_string("config.json").unwrap().as_str())
-            .unwrap();
+    println!("Parsing config {}", &args[1]);
+    let config = match serde_json::from_str::<Config>(config_string.as_str()) {
+        Ok(config) => config,
+        Err(e) => panic!("{}", e),
+    };
     INSTANCE.set(config.clone()).unwrap();
     for (_, destination_url) in config.urls.iter() {
         let mut headers = HeaderMap::new();
         headers.insert(
             "Location",
             HeaderValue::try_from(destination_url)
-                .expect("There was an error parsing your config file"),
+                .expect("There was an error parsing your config file target URLs"),
         );
     }
     // build our application with a route
@@ -38,6 +46,11 @@ async fn main() {
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
+        .with_graceful_shutdown(async {
+            tokio::signal::ctrl_c()
+                .await
+                .expect("failed to listen for ctrl+c");
+        })
         .await
         .unwrap();
 }
@@ -46,7 +59,7 @@ async fn main() {
 async fn root() -> impl IntoResponse {
     let config = INSTANCE.get().expect("Json did not read correctly").clone();
     Response::builder()
-        .status(StatusCode::PERMANENT_REDIRECT)
+        .status(StatusCode::FOUND)
         .header("Location", config.default)
         .body(axum::body::Body::empty())
         .unwrap()
@@ -59,7 +72,7 @@ async fn redirect(Path(path): Path<String>) -> (StatusCode, HeaderMap, &'static 
         if shortening == &path {
             let mut headers = HeaderMap::new();
             headers.insert("Location", HeaderValue::try_from(destination_url).unwrap());
-            return (StatusCode::PERMANENT_REDIRECT, headers, "Redirecting...");
+            return (StatusCode::FOUND, headers, "Redirecting...");
         }
     }
     (
