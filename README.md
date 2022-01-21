@@ -1,6 +1,7 @@
 # Very simple URL shortener
 ```json
 {
+  "port": 80,
   "default": "https://example.com",
   "urls": {
     "nerd": "https://randomairborne.dev"

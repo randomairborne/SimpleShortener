@@ -34,7 +34,7 @@ async fn main() {
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
-    let addr = SocketAddr::from(([127, 0, 0, 1], 80));
+    let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
@@ -71,6 +71,7 @@ async fn redirect(Path(path): Path<String>) -> (StatusCode, HeaderMap, &'static 
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct Config {
+    port: u16,
     default: String,
     urls: HashMap<String, String>,
 }
