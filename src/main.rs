@@ -11,17 +11,20 @@ static INSTANCE: OnceCell<Config> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
     let mut args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
         args.push(String::from("./config.json"))
     };
-    println!("Reading config {}", &args[1]);
+    tracing::log::info!("Reading config {}", &args[1]);
     let config_string = match std::fs::read_to_string(&args[1]) {
         Ok(config_string) => config_string,
         Err(e) => panic!("{}", e),
     };
     // get config
-    println!("Parsing config {}", &args[1]);
+    tracing::log::info!("Parsing config {}", &args[1]);
     let config = match serde_json::from_str::<Config>(config_string.as_str()) {
         Ok(config) => config,
         Err(e) => panic!("{}", e),
@@ -43,7 +46,7 @@ async fn main() {
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
     let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
-    println!("listening on {}", addr);
+    tracing::log::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .with_graceful_shutdown(async {
@@ -68,7 +71,7 @@ async fn root() -> impl IntoResponse {
 async fn redirect(Path(path): Path<String>) -> (StatusCode, HeaderMap, &'static str) {
     let config = INSTANCE.get().expect("Json did not read correctly").clone();
     for (shortening, destination_url) in config.urls.iter() {
-        println!("Shortening: {}, Path: {}, Destination: {}", shortening, path, destination_url);
+        tracing::log::debug!("Shortening: {}, Path: {}, Destination: {}", shortening, path, destination_url);
         if shortening == &path {
             let mut headers = HeaderMap::new();
             headers.insert("Location", HeaderValue::try_from(destination_url).unwrap());
