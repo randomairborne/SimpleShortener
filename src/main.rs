@@ -4,6 +4,7 @@ use axum::{extract::Path, response::IntoResponse, response::Response, routing::g
 use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::net::SocketAddr;
 
 // OnceCell init
@@ -38,7 +39,8 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         .route("/", get(root))
-        .route("/:path", get(redirect));
+        .route("/:path", get(redirect))
+    .route("/admin_panel", get(admin));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -82,9 +84,22 @@ async fn redirect(Path(path): Path<String>) -> (StatusCode, HeaderMap, &'static 
     )
 }
 
+async fn admin() -> impl IntoResponse {
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct Config {
     port: u16,
-    default: String,
-    urls: HashMap<String, String>,
+    database: DatabaseConfig,
+    users: HashMap<String, String>
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct DatabaseConfig {
+    username: String,
+    password: String,
+    host: String,
+    port: u16,
+    name: String,
+}
+

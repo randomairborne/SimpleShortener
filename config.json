@@ -1,8 +1,15 @@
 {
   "port": 24529,
-  "default": "https://example.com",
-  "urls": {
-    "nerd": "https://randomairborne.dev"
+  "database": {
+    "username": "shortener",
+    "password": "postgres_password",
+    "host": "localhost",
+    "port": 5432,
+    "name": "shortener"
+  },
+  "users": {
+    "IT": "ASecurePassword",
+    "marketing": "AnotherSecurePassword"
   }
 }
 
