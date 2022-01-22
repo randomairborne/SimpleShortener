@@ -43,7 +43,7 @@ async fn main() {
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
     let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
-    tracing::info!("listening on {}", addr);
+    println!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .with_graceful_shutdown(async {
@@ -68,7 +68,7 @@ async fn root() -> impl IntoResponse {
 async fn redirect(Path(path): Path<String>) -> (StatusCode, HeaderMap, &'static str) {
     let config = INSTANCE.get().expect("Json did not read correctly").clone();
     for (shortening, destination_url) in config.urls.iter() {
-        println!("Shortening: {}, Path: {}", shortening, path);
+        println!("Shortening: {}, Path: {}, Destination: {}", shortening, path, destination_url);
         if shortening == &path {
             let mut headers = HeaderMap::new();
             headers.insert("Location", HeaderValue::try_from(destination_url).unwrap());

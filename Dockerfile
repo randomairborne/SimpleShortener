@@ -11,9 +11,7 @@ RUN cargo build --release
 ###
 # Now generate our smaller image
 ###
-FROM alpine
-
+FROM debian:latest
 COPY --from=builder /build/target/release/simple_shortener /usr/bin/simpleshortener
 
-ENTRYPOINT ["/usr/bin/simpleshortener"]
-CMD []
+CMD ["/usr/bin/simpleshortener"]
