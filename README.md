@@ -18,3 +18,5 @@ then run with `./target/bin/simple_shortener /path/to/config.json`
 ## Using the docker image
 The docker image can be pulled from `randomairborne/simpleshortener`, run it with ```docker run -v `pwd`/config.json:/config.json randomairborne/simpleshortener``` to add your configuration file.
 Make sure to expose your specified port!
+
+If you have any issues you can contact me on discord, `valkyrie_pilot#2707`
