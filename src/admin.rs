@@ -60,3 +60,6 @@ pub async fn add<'a>(
     }
     (StatusCode::CREATED, "Added successfully!".into())
 }
+pub async fn usepost() -> &'static str {
+    "Use an HTTP post."
+}

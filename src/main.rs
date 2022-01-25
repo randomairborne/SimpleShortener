@@ -64,9 +64,9 @@ async fn main() {
     let app = Router::new()
         .route("/", get(redirect_handlers::root))
         .route("/:path", get(redirect_handlers::redirect))
-        .route("/admin_api", get(admin::add).post(admin::add))
+        .route("/admin_api", get(admin::usepost).post(admin::add))
         .route("/admin_api/list", get(admin::list_redirects))
-        .route("/admin_api/edit/:id", get(admin::edit).post(admin::edit));
+        .route("/admin_api/edit/:id", get(admin::usepost).post(admin::edit));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
