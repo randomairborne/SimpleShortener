@@ -1,11 +1,9 @@
-use std::collections::HashMap;
 use axum::extract::Path;
 use axum::http::{HeaderMap, HeaderValue, Response, StatusCode};
 use axum::response::IntoResponse;
 
 // basic handler that responds with a static string
 pub async fn root() -> impl IntoResponse {
-
     Response::builder()
         .status(StatusCode::OK)
         .header("Location", include_str!("root.html"))
@@ -14,12 +12,23 @@ pub async fn root() -> impl IntoResponse {
 }
 
 pub async fn redirect(Path(path): Path<String>) -> (StatusCode, HeaderMap, &'static str) {
-    let config = match crate::URLS.get().clone() {
-        None => {return (StatusCode::INTERNAL_SERVER_ERROR, HeaderMap::default(), "There was a severe internal server error.")}
-        Some(config) => {config}
+    let urls = match crate::URLS.get().clone() {
+        None => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                HeaderMap::default(),
+                "There was a severe internal server error.",
+            )
+        }
+        Some(config) => config,
     };
-    for (shortening, destination_url) in config.urls.iter() {
-        tracing::log::debug!("Shortening: {}, Path: {}, Destination: {}", shortening, path, destination_url);
+    for (shortening, destination_url) in urls.iter() {
+        tracing::log::debug!(
+            "Shortening: {}, Path: {}, Destination: {}",
+            shortening,
+            path,
+            destination_url
+        );
         if shortening == &path {
             let mut headers = HeaderMap::new();
             headers.insert("Location", HeaderValue::try_from(destination_url).unwrap());

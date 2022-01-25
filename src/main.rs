@@ -1,7 +1,6 @@
 mod admin;
-mod structs;
 mod redirect_handlers;
-
+mod structs;
 
 use axum::{routing::get, Router};
 use once_cell::sync::OnceCell;
@@ -35,17 +34,37 @@ async fn main() {
     };
     CONFIG.set(config.clone()).unwrap();
 
-    let pool = sqlx::postgres::PgPoolOptions::new()
+    let pool = match sqlx::postgres::PgPoolOptions::new()
         .max_connections(2)
-        .connect(config.database.as_str()).await?;
-    sqlx::query("CREATE TABLE IF NOT EXISTS links (link text NOT NULL, destination text NOT NULL)").execute(&pool).await?;
-    sqlx::query("SELECT * FROM links");
+        .connect(config.database.as_str())
+        .await
+    {
+        Ok(pool) => pool,
+        Err(_) => {
+            panic!("Failed to connect to database!")
+        }
+    };
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .expect("Failed to run migrations");
+    let urls_vec = match sqlx::query!("SELECT * FROM links").fetch_all(&pool).await {
+        Ok(url_map) => url_map,
+        Err(err) => {
+            panic!("Failed to select links from database! {}", err)
+        }
+    };
+    let mut urls = HashMap::with_capacity(urls_vec.len());
+    for url in urls_vec {
+        urls.insert(url.link, url.destination);
+    }
+    URLS.set(urls).unwrap();
     DB.set(pool).unwrap();
     // build our application with a route
     let app = Router::new()
         .route("/", get(redirect_handlers::root))
         .route("/:path", get(redirect_handlers::redirect))
-        .route("/admin_api", get(admin::admin).post(admin::admin))
+        .route("/admin_api", get(admin::add).post(admin::add))
         .route("/admin_api/list", get(admin::list_redirects))
         .route("/admin_api/edit/:id", get(admin::edit).post(admin::edit));
 

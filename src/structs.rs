@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
@@ -13,6 +13,10 @@ pub struct Edit {
     pub port: u16,
     pub database: String,
     pub users: HashMap<String, String>,
+}
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct List {
+    pub links: HashMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
