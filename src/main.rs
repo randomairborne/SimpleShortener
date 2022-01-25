@@ -1,51 +1,58 @@
-use axum::http::header::{HeaderMap, HeaderValue};
-use axum::http::StatusCode;
-use axum::{extract::Path, response::IntoResponse, response::Response, routing::get, Router};
+mod admin;
+mod structs;
+mod redirect_handlers;
+
+
+use axum::{routing::get, Router};
 use once_cell::sync::OnceCell;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::net::SocketAddr;
 
 // OnceCell init
-static INSTANCE: OnceCell<Config> = OnceCell::new();
+static CONFIG: OnceCell<structs::Config> = OnceCell::new();
+static URLS: OnceCell<HashMap<String, String>> = OnceCell::new();
+static DB: OnceCell<sqlx::Pool<sqlx::Postgres>> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_env("LOG"))
+        .init();
     let mut args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
-        args.push(String::from("./config.json"))
+        args.push(String::from("./config.toml"))
     };
-    println!("Reading config {}", &args[1]);
+    tracing::log::info!("Reading config {}", &args[1]);
     let config_string = match std::fs::read_to_string(&args[1]) {
         Ok(config_string) => config_string,
         Err(e) => panic!("{}", e),
     };
     // get config
-    println!("Parsing config {}", &args[1]);
-    let config = match serde_json::from_str::<Config>(config_string.as_str()) {
+    tracing::log::info!("Parsing config {}", &args[1]);
+    let config = match toml::from_str::<structs::Config>(config_string.as_str()) {
         Ok(config) => config,
         Err(e) => panic!("{}", e),
     };
-    INSTANCE.set(config.clone()).unwrap();
-    for (_, destination_url) in config.urls.iter() {
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "Location",
-            HeaderValue::try_from(destination_url)
-                .expect("There was an error parsing your config file target URLs"),
-        );
-    }
+    CONFIG.set(config.clone()).unwrap();
+
+    let pool = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(2)
+        .connect(config.database.as_str()).await?;
+    sqlx::query("CREATE TABLE IF NOT EXISTS links (link text NOT NULL, destination text NOT NULL)").execute(&pool).await?;
+    sqlx::query("SELECT * FROM links");
+    DB.set(pool).unwrap();
     // build our application with a route
     let app = Router::new()
-        .route("/", get(root))
-        .route("/:path", get(redirect))
-    .route("/admin_panel", get(admin));
+        .route("/", get(redirect_handlers::root))
+        .route("/:path", get(redirect_handlers::redirect))
+        .route("/admin_api", get(admin::admin).post(admin::admin))
+        .route("/admin_api/list", get(admin::list_redirects))
+        .route("/admin_api/edit/:id", get(admin::edit).post(admin::edit));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
     let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
-    println!("listening on {}", addr);
+    tracing::log::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .with_graceful_shutdown(async {
@@ -56,50 +63,3 @@ async fn main() {
         .await
         .unwrap();
 }
-
-// basic handler that responds with a static string
-async fn root() -> impl IntoResponse {
-    let config = INSTANCE.get().expect("Json did not read correctly").clone();
-    Response::builder()
-        .status(StatusCode::FOUND)
-        .header("Location", config.default)
-        .body(axum::body::Body::empty())
-        .unwrap()
-}
-
-async fn redirect(Path(path): Path<String>) -> (StatusCode, HeaderMap, &'static str) {
-    let config = INSTANCE.get().expect("Json did not read correctly").clone();
-    for (shortening, destination_url) in config.urls.iter() {
-        println!("Shortening: {}, Path: {}, Destination: {}", shortening, path, destination_url);
-        if shortening == &path {
-            let mut headers = HeaderMap::new();
-            headers.insert("Location", HeaderValue::try_from(destination_url).unwrap());
-            return (StatusCode::FOUND, headers, "Redirecting...");
-        }
-    }
-    (
-        StatusCode::NOT_FOUND,
-        HeaderMap::default(),
-        "404 redirect not found, ask the sender if they made a typo",
-    )
-}
-
-async fn admin() -> impl IntoResponse {
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct Config {
-    port: u16,
-    database: DatabaseConfig,
-    users: HashMap<String, String>
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct DatabaseConfig {
-    username: String,
-    password: String,
-    host: String,
-    port: u16,
-    name: String,
-}
-

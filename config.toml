@@ -1,0 +1,4 @@
+port = 24529
+database = "postgres://simpleshortener:simpleshortener@server.randomairborne.dev/simpleshortener"
+users = { "IT" = "ASecurePassword", "marketing" = "AnotherSecurePassword" }
+
