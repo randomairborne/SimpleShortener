@@ -1,14 +1,11 @@
 use axum::extract::Path;
-use axum::http::{HeaderMap, HeaderValue, Response, StatusCode};
-use axum::response::IntoResponse;
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
 
 // basic handler that responds with a static string
-pub async fn root() -> impl IntoResponse {
-    Response::builder()
-        .status(StatusCode::OK)
-        .header("Location", include_str!("root.html"))
-        .body(axum::body::Body::empty())
-        .unwrap()
+pub async fn root() -> (StatusCode, HeaderMap, &'static str) {
+    let mut headers = HeaderMap::new();
+    headers.insert("Content-Type", HeaderValue::try_from("text/html").unwrap());
+    (StatusCode::OK, headers, include_str!("root.html"))
 }
 
 pub async fn redirect(Path(path): Path<String>) -> (StatusCode, HeaderMap, &'static str) {
