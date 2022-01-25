@@ -26,7 +26,7 @@ pub async fn list_redirects<'a>() -> (StatusCode, std::borrow::Cow<'a, str>) {
 }
 
 pub async fn edit(
-    axum::extract::Json(payload): axum::extract::Json<crate::structs::Edit>,
+    axum::extract::Json(_payload): axum::extract::Json<crate::structs::Edit>,
 ) -> impl IntoResponse {
 }
 
