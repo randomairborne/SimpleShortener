@@ -9,7 +9,7 @@ pub async fn root() -> (StatusCode, HeaderMap, &'static str) {
 }
 
 pub async fn redirect(Path(path): Path<String>) -> (StatusCode, HeaderMap, &'static str) {
-    let urls = match crate::URLS.get().clone() {
+    let urls = match crate::URLS.get() {
         None => {
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
