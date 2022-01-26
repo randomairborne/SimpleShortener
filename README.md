@@ -1,4 +1,4 @@
-# Very simple URL shortener
+# Simple URL shortener
 ```toml
 # Port to run SimpleShortener on. Can be overridden with the `PORT` environment variable.
 port = 24529
