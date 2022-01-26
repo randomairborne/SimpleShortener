@@ -1,16 +1,16 @@
 mod admin;
-mod redirect_handlers;
+mod files;
+mod redirect_handler;
 mod structs;
 
-use axum::{routing::get, Router};
-use once_cell::sync::OnceCell;
-use std::collections::HashMap;
+use axum::{routing::get, routing::post, Router};
 use std::net::SocketAddr;
 
 // OnceCell init
-static CONFIG: OnceCell<structs::Config> = OnceCell::new();
-static URLS: OnceCell<HashMap<String, String>> = OnceCell::new();
-static DB: OnceCell<sqlx::Pool<sqlx::Postgres>> = OnceCell::new();
+static CONFIG: once_cell::sync::OnceCell<structs::Config> = once_cell::sync::OnceCell::new();
+static URLS: once_cell::sync::OnceCell<dashmap::DashMap<String, String>> =
+    once_cell::sync::OnceCell::new();
+static DB: once_cell::sync::OnceCell<sqlx::Pool<sqlx::Postgres>> = once_cell::sync::OnceCell::new();
 
 #[tokio::main]
 async fn main() {
@@ -28,7 +28,7 @@ async fn main() {
     };
     // get config
     tracing::log::info!("Parsing config {}", &args[1]);
-    let config = match toml::from_str::<structs::Config>(config_string.as_str()) {
+    let config = match toml::from_str::<structs::Config>(config_string.to_lowercase().as_str()) {
         Ok(config) => config,
         Err(e) => panic!("{}", e),
     };
@@ -54,7 +54,7 @@ async fn main() {
             panic!("Failed to select links from database! {}", err)
         }
     };
-    let mut urls = HashMap::with_capacity(urls_vec.len());
+    let urls = dashmap::DashMap::with_capacity(urls_vec.len());
     for url in urls_vec {
         urls.insert(url.link, url.destination);
     }
@@ -62,11 +62,15 @@ async fn main() {
     DB.set(pool).unwrap();
     // build our application with a route
     let app = Router::new()
-        .route("/", get(redirect_handlers::root))
-        .route("/:path", get(redirect_handlers::redirect))
-        .route("/admin_api", get(admin::usepost).post(admin::add))
+        .route("/", get(files::root))
+        .route("/:path", get(redirect_handler::redirect))
+        .route("/admin_api", post(admin::add))
         .route("/admin_api/list", get(admin::list_redirects))
-        .route("/admin_api/edit/:id", get(admin::usepost).post(admin::edit));
+        .route("/admin_api/edit/:id", post(admin::edit))
+        .route("/static_files/link.png", get(files::logo))
+        .route("/static_files/jbmono.woff", get(files::font_woff))
+        .route("/static_files/jbmono.woff2", get(files::font_woff2))
+        .route("/favicon.ico", get(files::favicon));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`

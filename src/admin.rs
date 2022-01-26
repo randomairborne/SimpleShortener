@@ -1,13 +1,7 @@
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
-
-pub async fn list_redirects<'a>() -> (StatusCode, std::borrow::Cow<'a, str>) {
+pub async fn list_redirects(_: crate::structs::Authorization) -> impl axum::response::IntoResponse {
     let links = match crate::URLS.get() {
         None => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "There was a serious internal error with the OnceCell".into(),
-            )
+            return Err(crate::structs::AdminErrors::InternalError);
         }
         Some(links) => links,
     };
@@ -16,33 +10,26 @@ pub async fn list_redirects<'a>() -> (StatusCode, std::borrow::Cow<'a, str>) {
     }) {
         Ok(json) => json,
         Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "There was a serious internal error".into(),
-            )
+            return Err(crate::structs::AdminErrors::InternalError);
         }
     };
-    (StatusCode::OK, json_response.into())
+    Ok(json_response)
 }
 
 pub async fn edit(
     axum::extract::Json(_payload): axum::extract::Json<crate::structs::Edit>,
-) -> impl IntoResponse {
+) -> impl axum::response::IntoResponse {
 }
 
-pub async fn add<'a>(
+pub async fn add(
+    _: crate::structs::Authorization,
     axum::extract::Json(payload): axum::extract::Json<crate::structs::Add>,
-) -> (StatusCode, std::borrow::Cow<'a, str>) {
+) -> Result<(axum::http::StatusCode, &'static str), crate::structs::AdminErrors> {
     let db = match crate::DB.get() {
-        None => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "There was a serious internal error with the OnceCell".into(),
-            )
-        }
+        None => return Err(crate::structs::AdminErrors::InternalError),
         Some(db) => db,
     };
-    match sqlx::query!(
+    if let Err(_) = sqlx::query!(
         "INSERT INTO links VALUES ($1,$2)",
         payload.link,
         payload.destination
@@ -50,16 +37,13 @@ pub async fn add<'a>(
     .execute(db)
     .await
     {
-        Ok(_) => {}
-        Err(_) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to insert to database: ".into(),
-            )
-        }
+        return Err(crate::structs::AdminErrors::InternalError);
     }
-    (StatusCode::CREATED, "Added successfully!".into())
-}
-pub async fn usepost() -> &'static str {
-    "Use an HTTP post."
+    let links = match crate::URLS.get() {
+        None => return Err(crate::structs::AdminErrors::InternalError),
+        Some(links) => links,
+    };
+    links.insert(payload.link, payload.destination);
+
+    Ok((axum::http::status::StatusCode::CREATED, "Link added!"))
 }

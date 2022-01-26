@@ -16,3 +16,5 @@ tracing = "0.1.29"
 tracing-subscriber = { version = "0.3.6", features = ["env-filter"] }
 toml = "0.5.8"
 sha2 = "0.10.1"
+dashmap = { version = "5.0.0", features = ["serde"] }
+async-trait = "0.1.52"
