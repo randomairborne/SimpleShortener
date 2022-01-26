@@ -10,7 +10,9 @@ users = { IT = "86ae7f34fa6f2df4487f293e671b4f12290cfb116b728d95d31b703759daf2c7
 ```
 Build with [rust](https://rust-lang.org)
 ```bash
-git switch panel
+git clone https://github.com/randomairborne/SimpleShortener.git
 cargo build --release
 ```
 then run with `./target/bin/simple_shortener /path/to/config.toml`
+
+If you have any issues you can contact me on discord, `valkyrie_pilot#2707`
