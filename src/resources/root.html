@@ -17,17 +17,24 @@
             justify-content: center;
             align-items: center;
             color: #43baf4;
-            font-family: "JetBrains Mono",monospace;
+            font-family: "JetBrains Mono", monospace;
         }
+
         a {
             color: #43baf4;
         }
+
         a:hover {
             text-decoration: none;
         }
-        div
-        {
-            display : block;
+
+        div {
+            display: block;
+        }
+
+        .center {
+            margin-left: auto;
+            margin-right: auto
         }
 
         @font-face {
@@ -41,7 +48,11 @@
     </style>
 </head>
 <body>
-<div><img src="/static_files/link.png" alt="Blue-colored link icon"></div>
-<h1>This link shortener is powered by <a href="https://github.com/randomairborne/simpleshortener/">SimpleShortener</a></h1>
+<div class="center">
+    <img src="/static_files/link.png" alt="Blue-colored link icon">
+    <h1>This link shortener is powered by
+        <a href="https://github.com/randomairborne/simpleshortener/">SimpleShortener</a>
+    </h1>
+</div>
 </body>
 </html>
