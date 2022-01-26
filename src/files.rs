@@ -72,18 +72,3 @@ pub async fn logo() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static 
         include_bytes!("resources/link.png").as_ref(),
     )
 }
-
-// basic handler that responds with a static png file
-pub async fn logo_small() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
-    let mut headers = axum::http::HeaderMap::new();
-    headers.insert(
-        axum::http::header::CONTENT_TYPE,
-        axum::http::HeaderValue::from_static("image/png"),
-    );
-    tracing::trace!("Handling logo request");
-    (
-        axum::http::StatusCode::OK,
-        headers,
-        include_bytes!("resources/link-small.png").as_ref(),
-    )
-}

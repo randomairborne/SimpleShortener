@@ -72,7 +72,6 @@ async fn main() {
         .route("/static_files/link.png", get(files::logo))
         .route("/static_files/jbmono.woff", get(files::font_woff))
         .route("/static_files/jbmono.woff2", get(files::font_woff2))
-        .route("/static_files/link_small.png", get(files::logo_small))
         .route("/favicon.ico", get(files::favicon));
 
     // run our app with hyper
