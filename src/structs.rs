@@ -96,13 +96,13 @@ impl axum::extract::FromRequest<axum::body::Body> for Authorization {
             result,
             config
             .users
-            .get(username.as_str())
+            .get(&username)
             .unwrap_or(&"(failed to get proper password hash)".to_string())
 
         );
         if config
             .users
-            .get(username.as_str())
+            .get(&username)
             .map_or(false, |user| user == &result)
         {
             Ok(Self)
