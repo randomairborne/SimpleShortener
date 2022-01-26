@@ -1,0 +1,40 @@
+{
+  "db": "PostgreSQL",
+  "9acb88ab18ab5d32966c058ddac7c3bfd2bb5266c587945a7cd8d5ce0e3140dc": {
+    "query": "SELECT * FROM links",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "link",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "destination",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "e6629dd88870d27813b078e6188bfd031138fcd40235c54b5a9d9a0dd9782cee": {
+    "query": "INSERT INTO links VALUES ($1,$2)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  }
+}

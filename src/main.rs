@@ -33,7 +33,7 @@ async fn main() {
         Err(e) => panic!("{}", e),
     };
     // This looks scary, but it simply looks through the config for the user's hashed passwords and lowercases them.
-    config.users.iter_mut().map(|(_, x)| { *x = x.to_lowercase() }).collect::<Vec<()>>();
+    config.users.iter_mut().map(|(_, x)| { *x = x.to_lowercase() }).for_each(drop);
     CONFIG.set(config.clone()).unwrap();
 
     let pool = match sqlx::postgres::PgPoolOptions::new()
