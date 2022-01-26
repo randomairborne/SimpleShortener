@@ -1,8 +1,0 @@
-{
-  "port": 24529,
-  "default": "https://example.com",
-  "urls": {
-    "nerd": "https://randomairborne.dev"
-  }
-}
-

@@ -1,22 +1,25 @@
-use axum::http::header::{HeaderMap, HeaderValue};
-use axum::http::StatusCode;
-use axum::{extract::Path, response::IntoResponse, response::Response, routing::get, Router};
-use once_cell::sync::OnceCell;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+mod admin;
+mod files;
+mod redirect_handler;
+mod structs;
+
+use axum::{routing::get, routing::post, Router};
 use std::net::SocketAddr;
 
 // OnceCell init
-static INSTANCE: OnceCell<Config> = OnceCell::new();
+static CONFIG: once_cell::sync::OnceCell<structs::Config> = once_cell::sync::OnceCell::new();
+static URLS: once_cell::sync::OnceCell<dashmap::DashMap<String, String>> =
+    once_cell::sync::OnceCell::new();
+static DB: once_cell::sync::OnceCell<sqlx::Pool<sqlx::Postgres>> = once_cell::sync::OnceCell::new();
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_env_filter(tracing_subscriber::EnvFilter::from_env("LOG"))
         .init();
     let mut args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
-        args.push(String::from("./config.json"))
+        args.push(String::from("./config.toml"))
     };
     tracing::log::info!("Reading config {}", &args[1]);
     let config_string = match std::fs::read_to_string(&args[1]) {
@@ -25,23 +28,51 @@ async fn main() {
     };
     // get config
     tracing::log::info!("Parsing config {}", &args[1]);
-    let config = match serde_json::from_str::<Config>(config_string.as_str()) {
+    let mut config = match toml::from_str::<structs::Config>(&config_string) {
         Ok(config) => config,
         Err(e) => panic!("{}", e),
     };
-    INSTANCE.set(config.clone()).unwrap();
-    for (_, destination_url) in config.urls.iter() {
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            "Location",
-            HeaderValue::try_from(destination_url)
-                .expect("There was an error parsing your config file target URLs"),
-        );
+    // This looks scary, but it simply looks through the config for the user's hashed passwords and lowercases them.
+    config.users.iter_mut().map(|(_, x)| { *x = x.to_lowercase() }).collect::<Vec<()>>();
+    CONFIG.set(config.clone()).unwrap();
+
+    let pool = match sqlx::postgres::PgPoolOptions::new()
+        .max_connections(2)
+        .connect(config.database.as_str())
+        .await
+    {
+        Ok(pool) => pool,
+        Err(_) => {
+            panic!("Failed to connect to database!")
+        }
+    };
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .expect("Failed to run migrations");
+    let urls_vec = match sqlx::query!("SELECT * FROM links").fetch_all(&pool).await {
+        Ok(url_map) => url_map,
+        Err(err) => {
+            panic!("Failed to select links from database! {}", err)
+        }
+    };
+    let urls = dashmap::DashMap::with_capacity(urls_vec.len());
+    for url in urls_vec {
+        urls.insert(url.link, url.destination);
     }
+    URLS.set(urls).unwrap();
+    DB.set(pool).unwrap();
     // build our application with a route
     let app = Router::new()
-        .route("/", get(root))
-        .route("/:path", get(redirect));
+        .route("/", get(files::root))
+        .route("/:path", get(redirect_handler::redirect))
+        .route("/admin_api", post(admin::add))
+        .route("/admin_api/list", get(admin::list_redirects))
+        .route("/admin_api/edit/:id", post(admin::edit))
+        .route("/static_files/link.png", get(files::logo))
+        .route("/static_files/jbmono.woff", get(files::font_woff))
+        .route("/static_files/jbmono.woff2", get(files::font_woff2))
+        .route("/favicon.ico", get(files::favicon));
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
@@ -56,38 +87,4 @@ async fn main() {
         })
         .await
         .unwrap();
-}
-
-// basic handler that responds with a static string
-async fn root() -> impl IntoResponse {
-    let config = INSTANCE.get().expect("Json did not read correctly").clone();
-    Response::builder()
-        .status(StatusCode::FOUND)
-        .header("Location", config.default)
-        .body(axum::body::Body::empty())
-        .unwrap()
-}
-
-async fn redirect(Path(path): Path<String>) -> (StatusCode, HeaderMap, &'static str) {
-    let config = INSTANCE.get().expect("Json did not read correctly").clone();
-    for (shortening, destination_url) in config.urls.iter() {
-        tracing::log::debug!("Shortening: {}, Path: {}, Destination: {}", shortening, path, destination_url);
-        if shortening == &path {
-            let mut headers = HeaderMap::new();
-            headers.insert("Location", HeaderValue::try_from(destination_url).unwrap());
-            return (StatusCode::FOUND, headers, "Redirecting...");
-        }
-    }
-    (
-        StatusCode::NOT_FOUND,
-        HeaderMap::default(),
-        "404 redirect not found, ask the sender if they made a typo",
-    )
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct Config {
-    port: u16,
-    default: String,
-    urls: HashMap<String, String>,
 }
