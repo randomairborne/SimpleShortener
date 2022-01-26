@@ -27,34 +27,45 @@ pub struct Add {
 }
 
 #[derive(Serialize, Clone, Debug)]
-pub enum AdminErrors {
+pub enum Errors {
     IncorrectAuth,
     InternalError,
     BadRequest,
+    NotFound,
 }
 
-impl axum::response::IntoResponse for AdminErrors {
+impl axum::response::IntoResponse for Errors {
     fn into_response(self) -> axum::response::Response {
         let body = match self {
-            AdminErrors::IncorrectAuth => axum::body::boxed(axum::body::Full::from(
+            Errors::IncorrectAuth => axum::body::boxed(axum::body::Full::from(
                 r#"{"error":"Authentication failed"}"#,
             )),
-            AdminErrors::InternalError => axum::body::boxed(axum::body::Full::from(
+            Errors::InternalError => axum::body::boxed(axum::body::Full::from(
                 r#"{"error":"There was a serious internal error"}"#,
             )),
-            AdminErrors::BadRequest => axum::body::boxed(axum::body::Full::from(
+            Errors::BadRequest => axum::body::boxed(axum::body::Full::from(
                 r#"{"error":"Missing header or malformed json"}"#,
+            )),
+            Errors::NotFound => axum::body::boxed(axum::body::Full::from(
+                include_str!("resources/404.html"),
             )),
         };
         let status = match self {
-            AdminErrors::IncorrectAuth => axum::http::status::StatusCode::UNAUTHORIZED,
-            AdminErrors::InternalError => axum::http::status::StatusCode::INTERNAL_SERVER_ERROR,
-            AdminErrors::BadRequest => axum::http::status::StatusCode::BAD_REQUEST,
+            Errors::IncorrectAuth => axum::http::status::StatusCode::UNAUTHORIZED,
+            Errors::InternalError => axum::http::status::StatusCode::INTERNAL_SERVER_ERROR,
+            Errors::BadRequest => axum::http::status::StatusCode::BAD_REQUEST,
+            Errors::NotFound => axum::http::status::StatusCode::NOT_FOUND,
+        };
+        let content_type = match self {
+            Errors::IncorrectAuth => axum::http::HeaderValue::from_static("application/json"),
+            Errors::InternalError => axum::http::HeaderValue::from_static("application/json"),
+            Errors::BadRequest => axum::http::HeaderValue::from_static("application/json"),
+            Errors::NotFound => axum::http::HeaderValue::from_static("text/html"),
         };
         axum::response::Response::builder()
             .header(
                 axum::http::header::CONTENT_TYPE,
-                axum::http::HeaderValue::from_static("application/json"),
+                content_type,
             )
             .status(status)
             .body(body)
@@ -66,24 +77,24 @@ pub struct Authorization;
 
 #[async_trait::async_trait]
 impl axum::extract::FromRequest<axum::body::Body> for Authorization {
-    type Rejection = AdminErrors;
+    type Rejection = Errors;
     async fn from_request(
         req: &mut axum::extract::RequestParts<axum::body::Body>,
     ) -> Result<Self, Self::Rejection> {
-        let headers = req.headers().ok_or_else(|| AdminErrors::InternalError)?;
+        let headers = req.headers().ok_or_else(|| Errors::InternalError)?;
 
         let auth_username = headers
             .get("username")
-            .ok_or_else(|| AdminErrors::BadRequest)?;
+            .ok_or_else(|| Errors::BadRequest)?;
         let auth_password = headers
             .get("password")
-            .ok_or_else(|| AdminErrors::BadRequest)?;
+            .ok_or_else(|| Errors::BadRequest)?;
         let username = String::from_utf8(auth_username.as_bytes().into())
-            .map_err(|_| AdminErrors::BadRequest)?;
+            .map_err(|_| Errors::BadRequest)?;
         let password = String::from_utf8(auth_password.as_bytes().into())
-            .map_err(|_| AdminErrors::BadRequest)?;
+            .map_err(|_| Errors::BadRequest)?;
         let config = match crate::CONFIG.get() {
-            None => return Err(AdminErrors::InternalError),
+            None => return Err(Errors::InternalError),
             Some(config) => config,
         };
         let result = sha2::Sha256::digest(password)
@@ -107,7 +118,7 @@ impl axum::extract::FromRequest<axum::body::Body> for Authorization {
         {
             Ok(Self)
         } else {
-            Err(AdminErrors::IncorrectAuth)
+            Err(Errors::IncorrectAuth)
         }
     }
 }

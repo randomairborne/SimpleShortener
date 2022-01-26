@@ -1,7 +1,7 @@
 pub async fn list_redirects(_: crate::structs::Authorization) -> impl axum::response::IntoResponse {
     let links = match crate::URLS.get() {
         None => {
-            return Err(crate::structs::AdminErrors::InternalError);
+            return Err(crate::structs::Errors::InternalError);
         }
         Some(links) => links,
     };
@@ -10,7 +10,7 @@ pub async fn list_redirects(_: crate::structs::Authorization) -> impl axum::resp
     }) {
         Ok(json) => json,
         Err(_) => {
-            return Err(crate::structs::AdminErrors::InternalError);
+            return Err(crate::structs::Errors::InternalError);
         }
     };
     Ok(json_response)
@@ -24,9 +24,9 @@ pub async fn edit(
 pub async fn add(
     _: crate::structs::Authorization,
     axum::extract::Json(payload): axum::extract::Json<crate::structs::Add>,
-) -> Result<(axum::http::StatusCode, &'static str), crate::structs::AdminErrors> {
+) -> Result<(axum::http::StatusCode, &'static str), crate::structs::Errors> {
     let db = match crate::DB.get() {
-        None => return Err(crate::structs::AdminErrors::InternalError),
+        None => return Err(crate::structs::Errors::InternalError),
         Some(db) => db,
     };
     if let Err(_) = sqlx::query!(
@@ -37,10 +37,10 @@ pub async fn add(
     .execute(db)
     .await
     {
-        return Err(crate::structs::AdminErrors::InternalError);
+        return Err(crate::structs::Errors::InternalError);
     }
     let links = match crate::URLS.get() {
-        None => return Err(crate::structs::AdminErrors::InternalError),
+        None => return Err(crate::structs::Errors::InternalError),
         Some(links) => links,
     };
     links.insert(payload.link, payload.destination);
