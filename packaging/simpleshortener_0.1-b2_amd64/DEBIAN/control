@@ -5,3 +5,4 @@ Maintainer: valkyrie_pilot <valk@randomairborne.dev>
 Depends: libc6 (>= 2.17), postgresql-14 (>= 14.1)
 Homepage: https://github.com/randomairborne/SimpleShortener
 Description: A simple program to shorten URLs
+
