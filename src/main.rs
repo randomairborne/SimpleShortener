@@ -82,7 +82,7 @@ async fn main() {
 
     // Checks for a PORT environment variable
     let port = match std::env::var("PORT") {
-        Ok(port_string) => match port_string.parse::<i16>() {
+        Ok(port_string) => match port_string.parse::<u16>() {
             Ok(port) => port,
             Err(_) => config.port,
         },
