@@ -4,9 +4,7 @@ mod redirect_handler;
 mod structs;
 
 use axum::{routing::get, routing::post, Router};
-use std::env::VarError;
 use std::net::SocketAddr;
-use std::num::ParseIntError;
 
 // OnceCell init
 static CONFIG: once_cell::sync::OnceCell<structs::Config> = once_cell::sync::OnceCell::new();
