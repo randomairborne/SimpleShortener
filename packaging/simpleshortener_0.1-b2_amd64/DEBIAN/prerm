@@ -1,2 +1,2 @@
-psql -U postgres -c "DROP DATABASE links"
-psql -U postgres -c "DROP USER simpleshortener"
+su - postgres -c 'psql -c "DROP DATABASE simpleshortener"'
+su - postgres -c 'psql -c "DROP USER simpleshortener'

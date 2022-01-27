@@ -1,5 +1,5 @@
-psql -U postgres -c "CREATE DATABASE simpleshortener"
-psql -U postgres -c "CREATE USER simpleshortener PASSWORD 'simpleshortener'"
+su - postgres -c 'psql -c "CREATE DATABASE simpleshortener"'
+su - postgres -c 'psql -c "CREATE USER simpleshortener PASSWORD \'simpleshortener\'"'
 systemctl enable simpleshortener.service
 systemctl start simpleshortener.service
 echo "Configuration files placed in /etc/simpleshortener/, please edit them as needed"
