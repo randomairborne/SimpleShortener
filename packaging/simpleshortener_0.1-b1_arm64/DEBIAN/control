@@ -1,0 +1,5 @@
+Package: simpleshortener
+Version: 0.1-b1
+Architecture: arm64
+Maintainer: valkyrie_pilot <valk@randomairborne.dev>
+Description: A simple program to shorten URLs

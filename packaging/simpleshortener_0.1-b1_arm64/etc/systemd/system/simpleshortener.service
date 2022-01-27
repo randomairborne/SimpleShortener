@@ -1,0 +1,12 @@
+[Unit]
+Description=A Simple URL Shortener
+After=network.target auditd.service
+
+[Service]
+Environment=LOG=info
+User=gxhut
+ExecStart=/usr/sbin/simpleshortener /etc/simpleshortener/config.toml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
