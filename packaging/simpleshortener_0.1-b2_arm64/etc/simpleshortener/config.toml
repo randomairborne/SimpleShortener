@@ -1,0 +1,7 @@
+# Port to run SimpleShortener on. Can be overridden with the `PORT` environment variable.
+port = 24529
+# Postgres database URL.
+database = "postgres://simpleshortener:simpleshortener@localhost/simpleshortener"
+# A key:value list of username:sha256-hahed passwords.
+users = {}
+
