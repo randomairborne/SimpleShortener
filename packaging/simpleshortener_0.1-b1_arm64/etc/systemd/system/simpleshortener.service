@@ -5,7 +5,7 @@ After=network.target auditd.service
 [Service]
 Environment=LOG=info
 User=gxhut
-ExecStart=/usr/sbin/simpleshortener /etc/simpleshortener/config.toml
+ExecStart=/usr/sbin/simple_shortener /etc/simpleshortener/config.toml
 Restart=on-failure
 
 [Install]
