@@ -4,7 +4,7 @@ After=network.target auditd.service
 
 [Service]
 Environment=LOG=info
-ExecStart=/usr/sbin/simple_shortener /etc/simpleshortener/config.toml
+ExecStart=/usr/bin/simple_shortener /etc/simpleshortener/config.toml
 Restart=on-failure
 
 [Install]

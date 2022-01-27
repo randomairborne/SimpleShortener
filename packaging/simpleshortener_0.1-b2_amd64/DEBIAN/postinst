@@ -1,1 +1,3 @@
+systemctl enable simpleshortener.service
+systemctl start simpleshortener.service
 echo "Configuration files placed in /etc/simpleshortener/, please edit them as needed"
