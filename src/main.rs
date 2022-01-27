@@ -4,7 +4,9 @@ mod redirect_handler;
 mod structs;
 
 use axum::{routing::get, routing::post, Router};
+use std::env::VarError;
 use std::net::SocketAddr;
+use std::num::ParseIntError;
 
 // OnceCell init
 static CONFIG: once_cell::sync::OnceCell<structs::Config> = once_cell::sync::OnceCell::new();
@@ -33,7 +35,11 @@ async fn main() {
         Err(e) => panic!("{}", e),
     };
     // This looks scary, but it simply looks through the config for the user's hashed passwords and lowercases them.
-    config.users.iter_mut().map(|(_, x)| { *x = x.to_lowercase() }).for_each(drop);
+    config
+        .users
+        .iter_mut()
+        .map(|(_, x)| *x = x.to_lowercase())
+        .for_each(drop);
     CONFIG.set(config.clone()).unwrap();
 
     let pool = match sqlx::postgres::PgPoolOptions::new()
@@ -74,9 +80,16 @@ async fn main() {
         .route("/static_files/jbmono.woff2", get(files::font_woff2))
         .route("/favicon.ico", get(files::favicon));
 
-    // run our app with hyper
-    // `axum::Server` is a re-export of `hyper::Server`
-    let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
+    // Checks for a PORT environment variable
+    let port = match std::env::var("PORT") {
+        Ok(port_string) => match port_string.parse::<i16>() {
+            Ok(port) => port,
+            Err(_) => config.port,
+        },
+        Err(_) => config.port,
+    };
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
     tracing::log::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
