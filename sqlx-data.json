@@ -24,6 +24,19 @@
       ]
     }
   },
+  "ad74dd627994634fbb1aa87d353a34f6da8415e59d6db1f7de715294fe79f723": {
+    "query": "UPDATE links SET destination = $1 WHERE link = $2 ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "e6629dd88870d27813b078e6188bfd031138fcd40235c54b5a9d9a0dd9782cee": {
     "query": "INSERT INTO links VALUES ($1,$2)",
     "describe": {
@@ -31,6 +44,18 @@
       "parameters": {
         "Left": [
           "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "ee7f1e0295309f3def5061cff75bca71e5ded78c491aede21d3469a1dbe2912a": {
+    "query": "DELETE FROM links WHERE link = $1",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
           "Text"
         ]
       },
