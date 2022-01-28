@@ -45,10 +45,10 @@ impl axum::response::IntoResponse for Errors {
     fn into_response(self) -> axum::response::Response {
         let body = match self {
             Errors::IncorrectAuth => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"Authentication failed"}"#,
+                r#"{"error":"Authentication failed"}\n"#,
             )),
             Errors::InternalError => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"There was a serious internal error"}"#,
+                r#"{"error":"There was a serious internal error"}\n"#,
             )),
             Errors::BadRequest => axum::body::boxed(axum::body::Full::from(
                 r#"{"error":"Missing header or malformed json"}"#,
@@ -57,10 +57,10 @@ impl axum::response::IntoResponse for Errors {
                 axum::body::boxed(axum::body::Full::from(include_str!("resources/404.html")))
             }
             Errors::NotFoundJson => {
-                axum::body::boxed(axum::body::Full::from(r#"{"error":"Link not found"}"#))
+                axum::body::boxed(axum::body::Full::from(r#"{"error":"Link not found"}\n"#))
             }
             Errors::UrlConflict => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"Short URL conflicts with system URL, already-existing url, or is empty"}"#,
+                r#"{"error":"Short URL conflicts with system URL, already-existing url, or is empty"}\n"#,
             )),
         };
         let status = match self {

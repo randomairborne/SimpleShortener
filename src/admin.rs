@@ -13,7 +13,7 @@ pub async fn list_redirects(_: crate::structs::Authorization) -> impl axum::resp
             return Err(crate::structs::Errors::InternalError);
         }
     };
-    Ok(json_response)
+    Ok(json_response + "\n")
 }
 
 pub async fn edit(
@@ -53,13 +53,13 @@ pub async fn edit(
         Ok(result) => result.rows_affected(),
         Err(_) => return Err(crate::structs::Errors::InternalError),
     };
-    if sqlx_result == 0 {
+    if sqlx_result != 1 {
         return Err(crate::structs::Errors::NotFoundJson);
     }
     links.remove(payload.link.as_str());
     links.insert(payload.link, payload.destination);
 
-    Ok(r#"{"message":"Link edited!"}"#)
+    Ok(r#"{"message":"Link edited!"}\n"#)
 }
 
 pub async fn delete(
@@ -100,7 +100,7 @@ pub async fn delete(
     }
     links.remove(payload.link.as_str());
 
-    Ok(r#"{"message":"Link removed!"}"#)
+    Ok(r#"{"message":"Link removed!"}\n"#)
 }
 
 pub async fn add(
@@ -142,6 +142,6 @@ pub async fn add(
 
     Ok((
         axum::http::status::StatusCode::CREATED,
-        r#"{"message":"Link added!"}"#,
+        r#"{"message":"Link added!"}\n"#,
     ))
 }
