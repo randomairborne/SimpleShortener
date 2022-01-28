@@ -13,6 +13,21 @@ pub async fn root() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static 
     )
 }
 
+// basic handler that responds with a static string
+pub async fn doc() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::CONTENT_TYPE,
+        axum::http::HeaderValue::from_static("text/html"),
+    );
+    tracing::trace!("Handling doc request");
+    (
+        axum::http::StatusCode::OK,
+        headers,
+        include_str!("resources/doc.html"),
+    )
+}
+
 // basic handler that responds with a static font file
 pub async fn font_woff2() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
     let mut headers = axum::http::HeaderMap::new();

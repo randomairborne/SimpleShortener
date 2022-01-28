@@ -9,7 +9,7 @@ pub async fn redirect(
     };
     let destination_url = match urls.get(path.as_str()) {
         None => return Err(crate::structs::Errors::NotFound),
-        Some(entry) => entry.key(),
+        Some(entry) => entry.value(),
     };
     tracing::trace!("Path: {}, Destination: {}", path, destination_url);
     let clean_destination_url = match axum::http::Uri::from_str(destination_url) {

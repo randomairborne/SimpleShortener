@@ -24,13 +24,19 @@ async fn main() {
     tracing::log::info!("Reading config {}", &args[1]);
     let config_string = match std::fs::read_to_string(&args[1]) {
         Ok(config_string) => config_string,
-        Err(e) => panic!("{}", e),
+        Err(e) => {
+            eprintln!("Failed to read config: {:#?}", err);
+            std::process::exit(1);
+        },
     };
     // get config
     tracing::log::info!("Parsing config {}", &args[1]);
     let mut config = match toml::from_str::<structs::Config>(&config_string) {
         Ok(config) => config,
-        Err(e) => panic!("{}", e),
+        Err(e) => {
+            eprintln!("Failed to parse config: {:#?}", err);
+            std::process::exit(2);
+        },
     };
     // This looks scary, but it simply looks through the config for the user's hashed passwords and lowercases them.
     config
@@ -38,7 +44,7 @@ async fn main() {
         .iter_mut()
         .map(|(_, x)| *x = x.to_lowercase())
         .for_each(drop);
-    CONFIG.set(config.clone()).unwrap();
+    CONFIG.set(config.clone()).expect("Failed to write to config OnceCell");
 
     let pool = match sqlx::postgres::PgPoolOptions::new()
         .max_connections(2)
@@ -46,33 +52,34 @@ async fn main() {
         .await
     {
         Ok(pool) => pool,
-        Err(_) => {
-            panic!("Failed to connect to database!")
+        Err(err) => {
+            eprintln!("Failed to connect to database: {:#?}", err);
+            std::process::exit(3);
         }
     };
     sqlx::migrate!()
         .run(&pool)
         .await
         .expect("Failed to run migrations");
-    let urls_vec = match sqlx::query!("SELECT * FROM links").fetch_all(&pool).await {
-        Ok(url_map) => url_map,
-        Err(err) => {
-            panic!("Failed to select links from database! {}", err)
-        }
-    };
+    let urls_vec = sqlx::query!("SELECT * FROM links")
+        .fetch_all(&pool)
+        .await
+        .expect("Failed to select links from database");
     let urls = dashmap::DashMap::with_capacity(urls_vec.len());
     for url in urls_vec {
         urls.insert(url.link, url.destination);
     }
-    URLS.set(urls).unwrap();
-    DB.set(pool).unwrap();
+    URLS.set(urls).expect("Failed to set URLS OnceCell");
+    DB.set(pool).expect("Failed to set database OnceCell");
     // build our application with a route
     let app = Router::new()
         .route("/", get(files::root))
         .route("/:path", get(redirect_handler::redirect))
-        .route("/admin_api", post(admin::add))
+        .route("/admin_api", get(files::doc))
+        .route("/admin_api/edit", post(admin::edit))
+        .route("/admin_api/delete", post(admin::delete))
+        .route("/admin_api/add", post(admin::add))
         .route("/admin_api/list", get(admin::list_redirects))
-        .route("/admin_api/edit/:id", post(admin::edit))
         .route("/static_files/link.png", get(files::logo))
         .route("/static_files/jbmono.woff", get(files::font_woff))
         .route("/static_files/jbmono.woff2", get(files::font_woff2))
