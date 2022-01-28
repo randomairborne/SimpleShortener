@@ -24,7 +24,7 @@ async fn main() {
     tracing::log::info!("Reading config {}", &args[1]);
     let config_string = match std::fs::read_to_string(&args[1]) {
         Ok(config_string) => config_string,
-        Err(e) => {
+        Err(err) => {
             eprintln!("Failed to read config: {:#?}", err);
             std::process::exit(1);
         },
@@ -33,7 +33,7 @@ async fn main() {
     tracing::log::info!("Parsing config {}", &args[1]);
     let mut config = match toml::from_str::<structs::Config>(&config_string) {
         Ok(config) => config,
-        Err(e) => {
+        Err(err) => {
             eprintln!("Failed to parse config: {:#?}", err);
             std::process::exit(2);
         },
