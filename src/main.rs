@@ -11,9 +11,19 @@ static CONFIG: once_cell::sync::OnceCell<structs::Config> = once_cell::sync::Onc
 static URLS: once_cell::sync::OnceCell<dashmap::DashMap<String, String>> =
     once_cell::sync::OnceCell::new();
 static DB: once_cell::sync::OnceCell<sqlx::Pool<sqlx::Postgres>> = once_cell::sync::OnceCell::new();
+static DISALLOWED_SHORTENINGS: once_cell::sync::OnceCell<std::collections::HashSet<String>> =
+    once_cell::sync::OnceCell::new();
 
 #[tokio::main]
 async fn main() {
+    DISALLOWED_SHORTENINGS
+        .set(std::collections::HashSet::from([
+            String::from(""),
+            String::from("simpleshortener_admin_api"),
+            String::from("simpleshortener_static_files"),
+            String::from("favicon.ico"),
+        ]))
+        .expect("Failed to set disallowed shortenings");
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_env("LOG"))
         .init();
@@ -21,13 +31,14 @@ async fn main() {
     if args.len() < 2 {
         args.push(String::from("./config.toml"))
     };
+
     tracing::log::info!("Reading config {}", &args[1]);
     let config_string = match std::fs::read_to_string(&args[1]) {
         Ok(config_string) => config_string,
         Err(err) => {
             eprintln!("Failed to read config: {:#?}", err);
             std::process::exit(1);
-        },
+        }
     };
     // get config
     tracing::log::info!("Parsing config {}", &args[1]);
@@ -36,7 +47,7 @@ async fn main() {
         Err(err) => {
             eprintln!("Failed to parse config: {:#?}", err);
             std::process::exit(2);
-        },
+        }
     };
     // This looks scary, but it simply looks through the config for the user's hashed passwords and lowercases them.
     config
@@ -44,7 +55,9 @@ async fn main() {
         .iter_mut()
         .map(|(_, x)| *x = x.to_lowercase())
         .for_each(drop);
-    CONFIG.set(config.clone()).expect("Failed to write to config OnceCell");
+    CONFIG
+        .set(config.clone())
+        .expect("Failed to write to config OnceCell");
 
     let pool = match sqlx::postgres::PgPoolOptions::new()
         .max_connections(2)
@@ -75,14 +88,24 @@ async fn main() {
     let app = Router::new()
         .route("/", get(files::root))
         .route("/:path", get(redirect_handler::redirect))
-        .route("/admin_api", get(files::doc))
-        .route("/admin_api/edit", post(admin::edit))
-        .route("/admin_api/delete", post(admin::delete))
-        .route("/admin_api/add", post(admin::add))
-        .route("/admin_api/list", get(admin::list_redirects))
-        .route("/static_files/link.png", get(files::logo))
-        .route("/static_files/jbmono.woff", get(files::font_woff))
-        .route("/static_files/jbmono.woff2", get(files::font_woff2))
+        .route("/simpleshortener_admin_api", get(files::doc))
+        .route("/simpleshortener_admin_api/", get(files::doc))
+        .route("/simpleshortener_admin_api/edit", post(admin::edit))
+        .route("/simpleshortener_admin_api/delete", post(admin::delete))
+        .route("/simpleshortener_admin_api/add", post(admin::add))
+        .route(
+            "/simpleshortener_admin_api/list",
+            get(admin::list_redirects),
+        )
+        .route("/simpleshortener_static_files/link.png", get(files::logo))
+        .route(
+            "/simpleshortener_static_files/jbmono.woff",
+            get(files::font_woff),
+        )
+        .route(
+            "/simpleshortener_static_files/jbmono.woff2",
+            get(files::font_woff2),
+        )
         .route("/favicon.ico", get(files::favicon));
 
     // Checks for a PORT environment variable

@@ -1,3 +1,4 @@
+use axum::http::HeaderValue;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
 
@@ -37,6 +38,7 @@ pub enum Errors {
     BadRequest,
     NotFound,
     NotFoundJson,
+    UrlConflict,
 }
 
 impl axum::response::IntoResponse for Errors {
@@ -57,6 +59,9 @@ impl axum::response::IntoResponse for Errors {
             Errors::NotFoundJson => {
                 axum::body::boxed(axum::body::Full::from(r#"{"error":"Link not found"}"#))
             }
+            Errors::UrlConflict => axum::body::boxed(axum::body::Full::from(
+                r#"{"error":"Short URL conflicts with system URL, already-existing url, or is empty"}"#,
+            )),
         };
         let status = match self {
             Errors::IncorrectAuth => axum::http::status::StatusCode::UNAUTHORIZED,
@@ -64,14 +69,14 @@ impl axum::response::IntoResponse for Errors {
             Errors::BadRequest => axum::http::status::StatusCode::BAD_REQUEST,
             Errors::NotFound => axum::http::status::StatusCode::NOT_FOUND,
             Errors::NotFoundJson => axum::http::status::StatusCode::NOT_FOUND,
+            Errors::UrlConflict => axum::http::status::StatusCode::CONFLICT,
         };
-        let content_type = match self {
-            Errors::IncorrectAuth => axum::http::HeaderValue::from_static("application/json"),
-            Errors::InternalError => axum::http::HeaderValue::from_static("application/json"),
-            Errors::BadRequest => axum::http::HeaderValue::from_static("application/json"),
-            Errors::NotFound => axum::http::HeaderValue::from_static("text/html"),
-            Errors::NotFoundJson => axum::http::HeaderValue::from_static("application/json"),
-        };
+        let content_type: HeaderValue;
+        if matches!(self, Errors::NotFound) {
+            content_type = axum::http::HeaderValue::from_static("text/html")
+        } else {
+            content_type = axum::http::HeaderValue::from_static("application/json")
+        }
         axum::response::Response::builder()
             .header(axum::http::header::CONTENT_TYPE, content_type)
             .status(status)
