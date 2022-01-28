@@ -43,9 +43,9 @@ pub async fn edit(
         Some(db) => db,
     };
     let sqlx_result = match sqlx::query!(
-        "UPDATE links SET link = $1 WHERE destination = $2 ",
-        payload.link,
-        payload.destination
+        "UPDATE links SET destination = $1 WHERE link = $2 ",
+        payload.destination,
+        payload.link
     )
     .execute(db)
     .await
