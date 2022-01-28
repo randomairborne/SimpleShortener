@@ -32,7 +32,7 @@ jobs:
                 name: Upload a Build Artifact
                 with:
                     name: simple_shortner
-                    path: target/release/simple_shortner
+                    path: ./target/release/simple_shortner
 
             -   name: Versions
                 id: version
@@ -41,7 +41,7 @@ jobs:
                     echo "::set-output name=tag::$(git describe --tags)"
 
             -   name: Calculate SHA512 checksum
-                run: sha512sum target/release/simple_shortner > simple_shortner.sha512
+                run: sha512sum ./target/release/simple_shortner > simple_shortner.sha512
 
             -   name: Release
                 uses: softprops/action-gh-release@v1
@@ -51,8 +51,8 @@ jobs:
                     name: ${{ steps.version.outputs.version }} - ${{ github.event.head_commit.message }}
                     draft: true
                     files: |
-                        target/release/simple_shortner
-                        simple_shortner.sha512
+                        ./target/release/simple_shortner
+                        ./simple_shortner.sha512
                     body: |
                         - ${{ github.event.head_commit.message }} ${{ github.sha }}
                     generate_release_notes: true
