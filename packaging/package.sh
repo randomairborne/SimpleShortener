@@ -1,7 +1,7 @@
 #!/bin/bash
 SQLX_OFFLINE=true
-#cargo build --release --target x86_64-unknown-linux-gnu
-#cross build --release --target aarch64-unknown-linux-gnu
+cargo build --release --target x86_64-unknown-linux-gnu
+cross build --release --target aarch64-unknown-linux-gnu
 mv ../target/x86_64-unknown-linux-gnu/release/simple_shortener ./simpleshortener_*_amd64/usr/bin/
 mv ../target/aarch64-unknown-linux-gnu/release/simple_shortener ./simpleshortener_*_arm64/usr/bin/
 if [[ -f "./simpleshortener_*_amd64/usr/bin/README" ]]; then
