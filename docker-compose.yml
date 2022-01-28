@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+    postgres:
+        image: postgres:10
+        restart: always
+        networks:
+            - simple_shortner
+        volumes:
+            - pg_data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_DB: simple_shortner
+            POSTGRES_USER: simple_shortner
+            POSTGRES_PASSWORD: simple_shortner
+    simple_shortner:
+        image: randomairborne/simple_shortner
+        restart: always
+        networks:
+            - simple_shortner
+        ports:
+            # change external port here, not in config.toml
+            - "127.0.0.1:24529:24529"
+        depends_on:
+            - postgres
+        environment:
+            PORT: 24529
+            DATABASE_URI: postgresql://postgres?dbname=simple_shortner&user=simple_shortner&password=simple_shortner
+volumes:
+    pg_data:
+networks:
+    simple_shortner:
