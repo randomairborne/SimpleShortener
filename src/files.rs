@@ -28,8 +28,38 @@ pub async fn doc() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static s
     )
 }
 
+// basic handler that responds with a static string
+pub async fn panelhtml() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::CONTENT_TYPE,
+        axum::http::HeaderValue::from_static("text/html"),
+    );
+    tracing::trace!("Handling doc request");
+    (
+        axum::http::StatusCode::OK,
+        headers,
+        include_str!("resources/panel/panel.html"),
+    )
+}
+
+// basic handler that responds with a static string
+pub async fn paneljs() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::CONTENT_TYPE,
+        axum::http::HeaderValue::from_static("text/javascript"),
+    );
+    tracing::trace!("Handling doc request");
+    (
+        axum::http::StatusCode::OK,
+        headers,
+        include_str!("resources/panel/panel.js"),
+    )
+}
+
 // basic handler that responds with a static font file
-pub async fn font_woff2() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
+pub async fn fontw2() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::CONTENT_TYPE,
@@ -39,12 +69,12 @@ pub async fn font_woff2() -> (axum::http::StatusCode, axum::http::HeaderMap, &'s
     (
         axum::http::StatusCode::OK,
         headers,
-        include_bytes!("resources/jbmono.woff2").as_ref(),
+        include_bytes!("resources/font.woff2").as_ref(),
     )
 }
 
 // basic handler that responds with a static font file
-pub async fn font_woff() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
+pub async fn fontw() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::CONTENT_TYPE,
@@ -54,7 +84,7 @@ pub async fn font_woff() -> (axum::http::StatusCode, axum::http::HeaderMap, &'st
     (
         axum::http::StatusCode::OK,
         headers,
-        include_bytes!("resources/jbmono.woff").as_ref(),
+        include_bytes!("resources/font.woff").as_ref(),
     )
 }
 

@@ -22,6 +22,7 @@ async fn main() {
             String::from("simpleshortener_admin_api"),
             String::from("simpleshortener_static_files"),
             String::from("favicon.ico"),
+            String::from("simpleshortener_admin_panel"),
         ]))
         .expect("Failed to set disallowed shortenings");
     tracing_subscriber::fmt()
@@ -93,19 +94,13 @@ async fn main() {
         .route("/simpleshortener_admin_api/edit", post(admin::edit))
         .route("/simpleshortener_admin_api/delete", post(admin::delete))
         .route("/simpleshortener_admin_api/add", post(admin::add))
-        .route(
-            "/simpleshortener_admin_api/list",
-            get(admin::list_redirects),
-        )
+        .route("/simpleshortener_admin_panel", get(files::panelhtml))
+        .route("/simpleshortener_admin_panel/", get(files::panelhtml))
+        .route("/simpleshortener_admin_panel/panel.js", get(files::paneljs))
+        .route("/simpleshortener_admin_api/list", get(admin::list))
         .route("/simpleshortener_static_files/link.png", get(files::logo))
-        .route(
-            "/simpleshortener_static_files/jbmono.woff",
-            get(files::font_woff),
-        )
-        .route(
-            "/simpleshortener_static_files/jbmono.woff2",
-            get(files::font_woff2),
-        )
+        .route("/simpleshortener_static_files/jb.woff", get(files::fontw))
+        .route("/simpleshortener_static_files/jb.woff2", get(files::fontw2))
         .route("/favicon.ico", get(files::favicon));
 
     // Checks for a PORT environment variable

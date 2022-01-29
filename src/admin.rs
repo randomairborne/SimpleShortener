@@ -1,4 +1,4 @@
-pub async fn list_redirects(_: crate::structs::Authorization) -> impl axum::response::IntoResponse {
+pub async fn list(_: crate::structs::Authorization) -> impl axum::response::IntoResponse {
     let links = match crate::URLS.get() {
         None => {
             return Err(crate::structs::Errors::InternalError);
