@@ -99,8 +99,8 @@ async fn main() {
         .route("/simpleshortener_admin_panel/panel.js", get(files::paneljs))
         .route("/simpleshortener_admin_api/list", get(admin::list))
         .route("/simpleshortener_static_files/link.png", get(files::logo))
-        .route("/simpleshortener_static_files/jb.woff", get(files::fontw))
-        .route("/simpleshortener_static_files/jb.woff2", get(files::fontw2))
+        .route("/simpleshortener_static_files/font.woff", get(files::fontw))
+        .route("/simpleshortener_static_files/font.woff2", get(files::fontw2))
         .route("/favicon.ico", get(files::favicon));
 
     // Checks for a PORT environment variable
