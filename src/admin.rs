@@ -27,7 +27,7 @@ pub async fn edit(
     match links.get(&payload.link) {
         None => {
             tracing::trace!("Could not edit {}, not found", payload.link);
-            return Err(crate::structs::Errors::NotFound);
+            return Err(crate::structs::Errors::NotFoundJson);
         }
         Some(_) => {}
     };
@@ -73,7 +73,7 @@ pub async fn delete(
     match links.get(&payload.link) {
         None => {
             tracing::trace!("Could not delete {}, not found", payload.link);
-            return Err(crate::structs::Errors::NotFound);
+            return Err(crate::structs::Errors::NotFoundJson);
         }
         Some(_) => {}
     };
