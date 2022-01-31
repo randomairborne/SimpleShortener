@@ -16,7 +16,7 @@ services:
         image: randomairborne/simpleshortener
         restart: always
         networks:
-            - simple_shortener
+            - simpleshortener
         ports:
             # change external port here, not in config.toml
             - "127.0.0.1:24529:24529"
