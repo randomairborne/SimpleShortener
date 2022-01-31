@@ -132,42 +132,43 @@ impl axum::response::IntoResponse for Errors {
 pub struct Authorization;
 
 #[async_trait::async_trait]
-impl<T> axum::extract::FromRequest<T> for Authorization {
+impl<T: Send> axum::extract::FromRequest<T> for Authorization {
     type Rejection = Errors;
     async fn from_request(
         req: &mut axum::extract::RequestParts<T>,
     ) -> Result<Self, Self::Rejection> {
-        let headers = req.headers().ok_or_else(|| Errors::InternalError)?;
+        let headers = req.headers().ok_or_else(|| Errors::MissingHeaders)?;
 
-        let auth_username = headers.get("username").ok_or_else(|| Errors::BadRequest)?;
-        let auth_password = headers.get("password").ok_or_else(|| Errors::BadRequest)?;
-        let username =
-            String::from_utf8(auth_username.as_bytes().into()).map_err(|_| Errors::BadRequest)?;
-        let password =
-            String::from_utf8(auth_password.as_bytes().into()).map_err(|_| Errors::BadRequest)?;
-        let config = match crate::CONFIG.get() {
-            None => return Err(Errors::C),
-            Some(config) => config,
-        };
+        let username = String::from_utf8(
+            headers
+                .get("username")
+                .ok_or_else(|| Errors::BadRequest)?
+                .as_bytes()
+                .into(),
+        )
+        .map_err(|_| Errors::BadRequest)?;
+        let password = String::from_utf8(
+            headers
+                .get("password")
+                .ok_or_else(|| Errors::BadRequest)?
+                .as_bytes()
+                .into(),
+        )
+        .map_err(|_| Errors::BadRequest)?;
+        let config = crate::CONFIG.get().ok_or(Errors::ConfigNotFound)?;
         let result = sha2::Sha256::digest(password)
             .into_iter()
             .map(|x| format!("{:02x}", x))
             .collect::<String>();
+        let existing_hash = config.users.get(&username);
         tracing::trace!(
             "Attempting to log in user {}, supplied password hash is {}, correct password hash is {}",
             username,
             result,
-            config
-            .users
-            .get(&username)
-            .unwrap_or(&"(failed to get proper password hash)".to_string())
-
+            existing_hash.unwrap_or_else(|| &"(failed to get proper password hash)".to_string())
         );
-        if config
-            .users
-            .get(&username)
-            .map_or(false, |user| user == &result)
-        {
+
+        if existing_hash.map_or(false, |user| user == &result) {
             Ok(Self)
         } else {
             Err(Errors::IncorrectAuth)
