@@ -43,6 +43,7 @@ pub enum Errors {
     UrlConflict,
 
     DbError(sqlx::Error),
+    InvalidUri(axum::http::uri::InvalidUri),
 
     DbNotFound,
     UrlsNotFound,
@@ -55,6 +56,12 @@ pub enum Errors {
 impl From<sqlx::Error> for Errors {
     fn from(e: sqlx::Error) -> Self {
         Self::DbError(e)
+    }
+}
+
+impl From<axum::http::uri::InvalidUri> for Errors {
+    fn from(e: axum::http::uri::InvalidUri) -> Self {
+        Self::InvalidUri(e)
     }
 }
 
@@ -88,6 +95,11 @@ impl axum::response::IntoResponse for Errors {
                 ),
             Errors::DbError(e) => (
                 format!(r#"{{"error":"Database returned an error: {:?}"}}"#, e).into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            Errors::InvalidUri(e) => (
+                format!(r#"{{"error":"The redirect URI is invalid: {}"}}"#, e).into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
