@@ -1,0 +1,29 @@
+name: Rust check build
+
+on:
+    push:
+        paths-ignore:
+            - "**.md"
+        branches:
+            - master
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    build:
+        runs-on: ubuntu-18.04
+        steps:
+            -   uses: actions/checkout@v2
+
+            -   name: Cache Packages
+                uses: Swatinem/rust-cache@v1.0.1
+
+            -   uses: actions-rs/toolchain@v1
+                with:
+                    profile: minimal
+                    toolchain: nightly
+                    override: true
+
+            -   name: Build
+                run: cargo check
