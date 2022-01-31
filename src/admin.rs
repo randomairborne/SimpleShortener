@@ -1,4 +1,4 @@
-use crate::structs::{Authorization, Delete, Edit, Errors, List};
+use crate::structs::{Add, Authorization, Delete, Edit, Errors, List};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
@@ -67,40 +67,28 @@ pub async fn delete(_: Authorization, Json(Delete { link }): Json<Delete>) -> Re
 
 pub async fn add(
     _: Authorization,
-    Json(payload): Json<crate::structs::Add>,
+    Json(Add { link, destination }): Json<Add>,
 ) -> Result<(StatusCode, &'static str), Errors> {
-    let links = match crate::URLS.get() {
-        None => return Err(Errors::InternalError),
-        Some(links) => links,
-    };
-    match links.get(&payload.link) {
-        None => {}
-        Some(_) => {
-            return Err(Errors::UrlConflict);
-        }
-    };
-    let disallowed_shortenings = match crate::DISALLOWED_SHORTENINGS.get() {
-        None => return Err(Errors::InternalError),
-        Some(ds) => ds,
-    };
-    if disallowed_shortenings.contains(payload.link.as_str()) {
-        return Err(Errors::UrlConflict);
-    }
-    let db = match crate::DB.get() {
-        None => return Err(Errors::InternalError),
-        Some(db) => db,
-    };
-    if let Err(_) = sqlx::query!(
-        "INSERT INTO links VALUES ($1,$2)",
-        payload.link,
-        payload.destination
-    )
-    .execute(db)
-    .await
-    {
-        return Err(Errors::InternalError);
-    }
-    links.insert(payload.link, payload.destination);
+    let links = crate::URLS.get().ok_or(Errors::UrlsNotFound)?;
+    let _: () = links
+        .contains_key(&link)
+        .then(|| ())
+        .ok_or(Errors::NotFoundJson)?;
 
-    Ok((StatusCode::CREATED, r#"{"message":"Link added!"}\n"#))
+    let _: () = crate::DISALLOWED_SHORTENINGS
+        .get()
+        .ok_or(Errors::DisallowedNotFound)?
+        .contains(&link)
+        .then(|| ())
+        .ok_or(Errors::UrlConflict)?;
+
+    let db = crate::DB.get().ok_or(Errors::DbNotFound)?;
+
+    sqlx::query!("INSERT INTO links VALUES ($1, $2)", link, destination)
+        .execute(db)
+        .await?;
+
+    links.insert(link, destination);
+
+    Ok((StatusCode::CREATED, r#"{"message":"Link added!"}"#))
 }
