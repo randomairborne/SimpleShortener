@@ -48,6 +48,8 @@ pub enum Errors {
     UrlsNotFound,
     DisallowedNotFound,
     ConfigNotFound,
+
+    MissingHeaders,
 }
 
 impl From<sqlx::Error> for Errors {
@@ -108,7 +110,12 @@ impl axum::response::IntoResponse for Errors {
                 r#"{"error":"Internal config not found"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
-            )
+            ),
+            Errors::MissingHeaders => (
+                r#"{"error":"another extractor took headers"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
         };
 
         axum::response::Response::builder()
