@@ -3,22 +3,10 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 
-pub async fn list(_: crate::structs::Authorization) -> impl IntoResponse {
-    let links = match crate::URLS.get() {
-        None => {
-            return Err(Errors::InternalError);
-        }
-        Some(links) => links,
-    };
-    let json_response = match serde_json::to_string(&List {
-        links: links.clone(),
-    }) {
-        Ok(json) => json,
-        Err(_) => {
-            return Err(Errors::InternalError);
-        }
-    };
-    Ok(json_response + "\n")
+pub async fn list(_: crate::structs::Authorization) -> Result<Json<List>, Errors> {
+    Ok(Json(List {
+        links: crate::URLS.get().ok_or(Errors::UrlsNotFound)?.clone(),
+    }))
 }
 
 pub async fn edit(_: Authorization, Json(payload): Json<Edit>) -> impl IntoResponse {
