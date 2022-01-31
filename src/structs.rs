@@ -125,10 +125,10 @@ impl axum::response::IntoResponse for Errors {
 pub struct Authorization;
 
 #[async_trait::async_trait]
-impl axum::extract::FromRequest<axum::body::Body> for Authorization {
+impl<T> axum::extract::FromRequest<T> for Authorization {
     type Rejection = Errors;
     async fn from_request(
-        req: &mut axum::extract::RequestParts<axum::body::Body>,
+        req: &mut axum::extract::RequestParts<T>,
     ) -> Result<Self, Self::Rejection> {
         let headers = req.headers().ok_or_else(|| Errors::InternalError)?;
 
