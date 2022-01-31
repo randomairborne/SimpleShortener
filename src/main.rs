@@ -4,15 +4,14 @@ mod redirect_handler;
 mod structs;
 
 use axum::{routing::get, routing::post, Router};
+use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
 
 // OnceCell init
-static CONFIG: once_cell::sync::OnceCell<structs::Config> = once_cell::sync::OnceCell::new();
-static URLS: once_cell::sync::OnceCell<dashmap::DashMap<String, String>> =
-    once_cell::sync::OnceCell::new();
-static DB: once_cell::sync::OnceCell<sqlx::Pool<sqlx::Postgres>> = once_cell::sync::OnceCell::new();
-static DISALLOWED_SHORTENINGS: once_cell::sync::OnceCell<std::collections::HashSet<String>> =
-    once_cell::sync::OnceCell::new();
+static CONFIG: OnceCell<structs::Config> = OnceCell::new();
+static URLS: OnceCell<dashmap::DashMap<String, String>> = OnceCell::new();
+static DB: OnceCell<sqlx::Pool<sqlx::Postgres>> = OnceCell::new();
+static DISALLOWED_SHORTENINGS: OnceCell<std::collections::HashSet<String>> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
@@ -53,8 +52,11 @@ async fn main() {
     // This looks scary, but it simply looks through the config for the user's hashed passwords and lowercases them.
     config
         .users
+        // get mutable iterator over items
         .iter_mut()
+        // for every item, update the stored string to be lowercase
         .map(|(_, x)| *x = x.to_lowercase())
+        // consume the iterator by dropping each item in it
         .for_each(drop);
     CONFIG
         .set(config.clone())
