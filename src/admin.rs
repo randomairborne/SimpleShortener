@@ -9,45 +9,37 @@ pub async fn list(_: crate::structs::Authorization) -> Result<Json<List>, Errors
     }))
 }
 
-pub async fn edit(_: Authorization, Json(payload): Json<Edit>) -> impl IntoResponse {
-    let links = match crate::URLS.get() {
-        None => return Err(Errors::InternalError),
-        Some(links) => links,
-    };
-    match links.get(&payload.link) {
-        None => {
-            tracing::trace!("Could not edit {}, not found", payload.link);
-            return Err(Errors::NotFoundJson);
-        }
-        Some(_) => {}
-    };
-    let disallowed_shortenings = match crate::DISALLOWED_SHORTENINGS.get() {
-        None => return Err(Errors::InternalError),
-        Some(ds) => ds,
-    };
-    if disallowed_shortenings.contains(payload.link.as_str()) {
-        return Err(Errors::UrlConflict);
-    }
-    let db = match crate::DB.get() {
-        None => return Err(Errors::InternalError),
-        Some(db) => db,
-    };
-    let sqlx_result = match sqlx::query!(
-        "UPDATE links SET destination = $1 WHERE link = $2 ",
-        payload.destination,
-        payload.link
-    )
-    .execute(db)
-    .await
-    {
-        Ok(result) => result.rows_affected(),
-        Err(_) => return Err(Errors::InternalError),
-    };
-    if sqlx_result != 1 {
-        return Err(Errors::NotFoundJson);
-    }
-    links.remove(payload.link.as_str());
-    links.insert(payload.link, payload.destination);
+pub async fn edit(
+    _: Authorization,
+    Json(Edit { link, destination }): Json<Edit>,
+) -> Result<&str, Errors> {
+    let links = crate::URLS.get().ok_or(Errors::UrlsNotFound)?;
+    let _: () = links
+        .contains_key(&link)
+        .then(|| ())
+        .ok_or(Errors::NotFoundJson)?;
+
+    let _: () = crate::DISALLOWED_SHORTENINGS
+        .get()
+        .ok_or(Errors::DisallowedNotFound)?
+        .contains(&link)
+        .then(|| ())
+        .ok_or(Errors::UrlConflict)?;
+
+    let db = crate::DB.get().ok_or(Errors::DbNotFound)?;
+    assert_ne!(
+        sqlx::query!(
+            "UPDATE links SET destination = $1 WHERE link = $2",
+            destination,
+            link
+        )
+        .execute(db)
+        .await?
+        .rows_affected(),
+        1,
+        "already checked there would be at least one row in the database but that row does not exist?"
+    );
+    links.insert(link, destination);
 
     Ok(r#"{"message":"Link edited!"}\n"#)
 }
