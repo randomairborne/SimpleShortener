@@ -18,10 +18,10 @@ async fn main() {
     DISALLOWED_SHORTENINGS
         .set(std::collections::HashSet::from([
             String::from(""),
-            String::from("simpleshortener_admin_api"),
-            String::from("simpleshortener_static_files"),
             String::from("favicon.ico"),
+            String::from("simpleshortener_admin_api"),
             String::from("simpleshortener_admin_panel"),
+            String::from("simpleshortener_static_files"),
         ]))
         .expect("Failed to set disallowed shortenings");
     tracing_subscriber::fmt()
@@ -56,9 +56,11 @@ async fn main() {
         .set(config.clone())
         .expect("Failed to write to config OnceCell");
 
+    // Checks for a DATABASE_URI environment variable
+    let database_uri = std::env::var("DATABASE_URI").unwrap_or(config.database);
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(2)
-        .connect(config.database.as_str())
+        .connect(database_uri.as_str())
         .await
         .unwrap_or_else(|err| {
             eprintln!("Failed to connect to database: {:#?}", err);
