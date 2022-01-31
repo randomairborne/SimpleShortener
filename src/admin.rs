@@ -1,45 +1,47 @@
-pub async fn list(_: crate::structs::Authorization) -> impl axum::response::IntoResponse {
+use crate::structs::{Authorization, Delete, Edit, Errors, List};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum::Json;
+
+pub async fn list(_: crate::structs::Authorization) -> impl IntoResponse {
     let links = match crate::URLS.get() {
         None => {
-            return Err(crate::structs::Errors::InternalError);
+            return Err(Errors::InternalError);
         }
         Some(links) => links,
     };
-    let json_response = match serde_json::to_string(&crate::structs::List {
+    let json_response = match serde_json::to_string(&List {
         links: links.clone(),
     }) {
         Ok(json) => json,
         Err(_) => {
-            return Err(crate::structs::Errors::InternalError);
+            return Err(Errors::InternalError);
         }
     };
     Ok(json_response + "\n")
 }
 
-pub async fn edit(
-    _: crate::structs::Authorization,
-    axum::extract::Json(payload): axum::extract::Json<crate::structs::Edit>,
-) -> impl axum::response::IntoResponse {
+pub async fn edit(_: Authorization, Json(payload): Json<Edit>) -> impl IntoResponse {
     let links = match crate::URLS.get() {
-        None => return Err(crate::structs::Errors::InternalError),
+        None => return Err(Errors::InternalError),
         Some(links) => links,
     };
     match links.get(&payload.link) {
         None => {
             tracing::trace!("Could not edit {}, not found", payload.link);
-            return Err(crate::structs::Errors::NotFoundJson);
+            return Err(Errors::NotFoundJson);
         }
         Some(_) => {}
     };
     let disallowed_shortenings = match crate::DISALLOWED_SHORTENINGS.get() {
-        None => return Err(crate::structs::Errors::InternalError),
+        None => return Err(Errors::InternalError),
         Some(ds) => ds,
     };
     if disallowed_shortenings.contains(payload.link.as_str()) {
-        return Err(crate::structs::Errors::UrlConflict);
+        return Err(Errors::UrlConflict);
     }
     let db = match crate::DB.get() {
-        None => return Err(crate::structs::Errors::InternalError),
+        None => return Err(Errors::InternalError),
         Some(db) => db,
     };
     let sqlx_result = match sqlx::query!(
@@ -51,10 +53,10 @@ pub async fn edit(
     .await
     {
         Ok(result) => result.rows_affected(),
-        Err(_) => return Err(crate::structs::Errors::InternalError),
+        Err(_) => return Err(Errors::InternalError),
     };
     if sqlx_result != 1 {
-        return Err(crate::structs::Errors::NotFoundJson);
+        return Err(Errors::NotFoundJson);
     }
     links.remove(payload.link.as_str());
     links.insert(payload.link, payload.destination);
@@ -62,30 +64,27 @@ pub async fn edit(
     Ok(r#"{"message":"Link edited!"}\n"#)
 }
 
-pub async fn delete(
-    _: crate::structs::Authorization,
-    axum::extract::Json(payload): axum::extract::Json<crate::structs::Delete>,
-) -> impl axum::response::IntoResponse {
+pub async fn delete(_: Authorization, Json(payload): Json<Delete>) -> impl IntoResponse {
     let links = match crate::URLS.get() {
-        None => return Err(crate::structs::Errors::InternalError),
+        None => return Err(Errors::InternalError),
         Some(links) => links,
     };
     match links.get(&payload.link) {
         None => {
             tracing::trace!("Could not delete {}, not found", payload.link);
-            return Err(crate::structs::Errors::NotFoundJson);
+            return Err(Errors::NotFoundJson);
         }
         Some(_) => {}
     };
     let disallowed_shortenings = match crate::DISALLOWED_SHORTENINGS.get() {
-        None => return Err(crate::structs::Errors::InternalError),
+        None => return Err(Errors::InternalError),
         Some(ds) => ds,
     };
     if disallowed_shortenings.contains(payload.link.as_str()) {
-        return Err(crate::structs::Errors::UrlConflict);
+        return Err(Errors::UrlConflict);
     }
     let db = match crate::DB.get() {
-        None => return Err(crate::structs::Errors::InternalError),
+        None => return Err(Errors::InternalError),
         Some(db) => db,
     };
     let sqlx_result = match sqlx::query!("DELETE FROM links WHERE link = $1", payload.link)
@@ -93,10 +92,10 @@ pub async fn delete(
         .await
     {
         Ok(result) => result.rows_affected(),
-        Err(_) => return Err(crate::structs::Errors::InternalError),
+        Err(_) => return Err(Errors::InternalError),
     };
     if sqlx_result != 1 {
-        return Err(crate::structs::Errors::NotFoundJson);
+        return Err(Errors::NotFoundJson);
     }
     links.remove(payload.link.as_str());
 
@@ -104,28 +103,28 @@ pub async fn delete(
 }
 
 pub async fn add(
-    _: crate::structs::Authorization,
-    axum::extract::Json(payload): axum::extract::Json<crate::structs::Add>,
-) -> Result<(axum::http::StatusCode, &'static str), crate::structs::Errors> {
+    _: Authorization,
+    Json(payload): Json<crate::structs::Add>,
+) -> Result<(StatusCode, &'static str), Errors> {
     let links = match crate::URLS.get() {
-        None => return Err(crate::structs::Errors::InternalError),
+        None => return Err(Errors::InternalError),
         Some(links) => links,
     };
     match links.get(&payload.link) {
         None => {}
         Some(_) => {
-            return Err(crate::structs::Errors::UrlConflict);
+            return Err(Errors::UrlConflict);
         }
     };
     let disallowed_shortenings = match crate::DISALLOWED_SHORTENINGS.get() {
-        None => return Err(crate::structs::Errors::InternalError),
+        None => return Err(Errors::InternalError),
         Some(ds) => ds,
     };
     if disallowed_shortenings.contains(payload.link.as_str()) {
-        return Err(crate::structs::Errors::UrlConflict);
+        return Err(Errors::UrlConflict);
     }
     let db = match crate::DB.get() {
-        None => return Err(crate::structs::Errors::InternalError),
+        None => return Err(Errors::InternalError),
         Some(db) => db,
     };
     if let Err(_) = sqlx::query!(
@@ -136,12 +135,9 @@ pub async fn add(
     .execute(db)
     .await
     {
-        return Err(crate::structs::Errors::InternalError);
+        return Err(Errors::InternalError);
     }
     links.insert(payload.link, payload.destination);
 
-    Ok((
-        axum::http::status::StatusCode::CREATED,
-        r#"{"message":"Link added!"}\n"#,
-    ))
+    Ok((StatusCode::CREATED, r#"{"message":"Link added!"}\n"#))
 }
