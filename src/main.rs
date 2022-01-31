@@ -56,8 +56,8 @@ async fn main() {
         .set(config.clone())
         .expect("Failed to write to config OnceCell");
 
-    // Checks for a DATABASE_URI environment variable
-    let database_uri = std::env::var("DATABASE_URI").unwrap_or(config.database);
+    // Checks for a PORT environment variable
+    let database_uri = std::env::var("DATABASE_URI").unwrap_or_else(|_| config.database.expect("Database URI not set!"));
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(2)
         .connect(database_uri.as_str())
@@ -105,7 +105,7 @@ async fn main() {
     // Checks for a PORT environment variable
     let port = match std::env::var("PORT").map(|x| x.parse::<u16>()) {
         Ok(Ok(port)) => port,
-        Err(_) => config.port,
+        Err(_) => config.port.expect("Database URI not set!"),
         Ok(Err(e)) => {
             eprintln!("port environment variable invalid: {:#?}", e);
             std::process::exit(3);
