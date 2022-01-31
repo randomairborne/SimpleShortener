@@ -16,3 +16,5 @@ SQLX_OFFLINE="true" cargo build --release
 then run with `./target/bin/simple_shortener /path/to/config.toml`
 
 If you have any issues you can contact me on discord, `valkyrie_pilot#2707`
+
+The panel does not in fact work, if someone feels like writing that feel free
