@@ -149,12 +149,12 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
     async fn from_request(
         req: &mut axum::extract::RequestParts<T>,
     ) -> Result<Self, Self::Rejection> {
-        let headers = req.headers().ok_or_else(|| Errors::MissingHeaders)?;
+        let headers = req.headers().ok_or(Errors::MissingHeaders)?;
 
         let username = String::from_utf8(
             headers
                 .get("username")
-                .ok_or_else(|| Errors::BadRequest)?
+                .ok_or(Errors::BadRequest)?
                 .as_bytes()
                 .into(),
         )
@@ -162,7 +162,7 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
         let password = String::from_utf8(
             headers
                 .get("password")
-                .ok_or_else(|| Errors::BadRequest)?
+                .ok_or(Errors::BadRequest)?
                 .as_bytes()
                 .into(),
         )
