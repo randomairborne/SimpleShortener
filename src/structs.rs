@@ -35,7 +35,7 @@ pub struct List {
 }
 
 #[derive(Debug)]
-pub enum Errors {
+pub enum WebServerError {
     IncorrectAuth,
     BadRequest,
     NotFound,
@@ -53,77 +53,77 @@ pub enum Errors {
     MissingHeaders,
 }
 
-impl From<sqlx::Error> for Errors {
+impl From<sqlx::Error> for WebServerError {
     fn from(e: sqlx::Error) -> Self {
         Self::DbError(e)
     }
 }
 
-impl From<axum::http::uri::InvalidUri> for Errors {
+impl From<axum::http::uri::InvalidUri> for WebServerError {
     fn from(e: axum::http::uri::InvalidUri) -> Self {
         Self::InvalidUri(e)
     }
 }
 
-impl axum::response::IntoResponse for Errors {
+impl axum::response::IntoResponse for WebServerError {
     fn into_response(self) -> axum::response::Response {
         let (body, status, content_type): (Cow<str>, StatusCode, &'static str) = match self {
-            Errors::IncorrectAuth => (
+            WebServerError::IncorrectAuth => (
                 r#"{"error":"Authentication failed"}"#.into(),
                 StatusCode::UNAUTHORIZED,
                 "application/json",
             ),
-            Errors::BadRequest => (
+            WebServerError::BadRequest => (
                 r#"{"error":"Missing header or malformed json"}"#.into(),
                 StatusCode::BAD_REQUEST,
                 "application/json",
             ),
-            Errors::NotFound => (
+            WebServerError::NotFound => (
                 include_str!("resources/404.html").into(),
                 StatusCode::NOT_FOUND,
                 "text/html",
             ),
-            Errors::NotFoundJson => (
+            WebServerError::NotFoundJson => (
                 r#"{"error":"Link not found"}"#.into(),
                 StatusCode::NOT_FOUND,
                 "application/json",
             ),
-            Errors::UrlConflict => (
+            WebServerError::UrlConflict => (
                 r#"{"error":"Short URL conflicts with system URL, already-existing url, or is empty"}"#.into(),
                 StatusCode::CONFLICT,
                 "application/json",
                 ),
-            Errors::DbError(e) => (
+            WebServerError::DbError(e) => (
                 format!(r#"{{"error":"Database returned an error: {:?}"}}"#, e).into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
-            Errors::InvalidUri(e) => (
+            WebServerError::InvalidUri(e) => (
                 format!(r#"{{"error":"The redirect URI is invalid: {}"}}"#, e).into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
-            Errors::DbNotFound => (
+            WebServerError::DbNotFound => (
                 r#"{"error":"Database pool not found"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
-            Errors::UrlsNotFound => (
+            WebServerError::UrlsNotFound => (
                 r#"{"error":"Internal URL mapping list not found"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
-            Errors::DisallowedNotFound => (
+            WebServerError::DisallowedNotFound => (
                 r#"{"error":"Internal disallowed URL list not found"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
-            Errors::ConfigNotFound => (
+            WebServerError::ConfigNotFound => (
                 r#"{"error":"Internal config not found"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
-            Errors::MissingHeaders => (
+            WebServerError::MissingHeaders => (
                 r#"{"error":"another extractor took headers"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
@@ -145,29 +145,29 @@ pub struct Authorization;
 
 #[async_trait::async_trait]
 impl<T: Send> axum::extract::FromRequest<T> for Authorization {
-    type Rejection = Errors;
+    type Rejection = WebServerError;
     async fn from_request(
         req: &mut axum::extract::RequestParts<T>,
     ) -> Result<Self, Self::Rejection> {
-        let headers = req.headers().ok_or(Errors::MissingHeaders)?;
+        let headers = req.headers().ok_or(WebServerError::MissingHeaders)?;
 
         let username = String::from_utf8(
             headers
                 .get("username")
-                .ok_or(Errors::BadRequest)?
+                .ok_or(WebServerError::BadRequest)?
                 .as_bytes()
                 .into(),
         )
-        .map_err(|_| Errors::BadRequest)?;
+        .map_err(|_| WebServerError::BadRequest)?;
         let password = String::from_utf8(
             headers
                 .get("password")
-                .ok_or(Errors::BadRequest)?
+                .ok_or(WebServerError::BadRequest)?
                 .as_bytes()
                 .into(),
         )
-        .map_err(|_| Errors::BadRequest)?;
-        let config = crate::CONFIG.get().ok_or(Errors::ConfigNotFound)?;
+        .map_err(|_| WebServerError::BadRequest)?;
+        let config = crate::CONFIG.get().ok_or(WebServerError::ConfigNotFound)?;
         let result = sha2::Sha256::digest(password)
             .into_iter()
             .map(|x| format!("{:02x}", x))
@@ -183,7 +183,7 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
         if existing_hash.map_or(false, |user| user == result) {
             Ok(Self)
         } else {
-            Err(Errors::IncorrectAuth)
+            Err(WebServerError::IncorrectAuth)
         }
     }
 }
