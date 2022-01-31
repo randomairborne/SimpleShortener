@@ -7,8 +7,8 @@ use std::borrow::Cow;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
-    pub port: u16,
-    pub database: String,
+    pub port: Option<u16>,
+    pub database: Option<String>,
     pub users: std::collections::HashMap<String, String>,
 }
 
