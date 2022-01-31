@@ -1,6 +1,9 @@
+use axum::body::{boxed, Full};
+use axum::http::status::StatusCode;
 use axum::http::HeaderValue;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
+use std::borrow::Cow;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
@@ -34,53 +37,84 @@ pub struct List {
 #[derive(Serialize, Clone, Debug)]
 pub enum Errors {
     IncorrectAuth,
-    InternalError,
     BadRequest,
     NotFound,
     NotFoundJson,
     UrlConflict,
+
+    DbError(sqlx::Error),
+
+    DbNotFound,
+    UrlsNotFound,
+    DisallowedNotFound,
+    ConfigNotFound,
+}
+
+impl From<sqlx::Error> for Errors {
+    fn from(e: sqlx::Error) -> Self {
+        Self::DbError(e)
+    }
 }
 
 impl axum::response::IntoResponse for Errors {
     fn into_response(self) -> axum::response::Response {
-        let body = match self {
-            Errors::IncorrectAuth => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"Authentication failed"}\n"#,
-            )),
-            Errors::InternalError => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"There was a serious internal error"}\n"#,
-            )),
-            Errors::BadRequest => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"Missing header or malformed json"}"#,
-            )),
-            Errors::NotFound => {
-                axum::body::boxed(axum::body::Full::from(include_str!("resources/404.html")))
-            }
-            Errors::NotFoundJson => {
-                axum::body::boxed(axum::body::Full::from(r#"{"error":"Link not found"}\n"#))
-            }
-            Errors::UrlConflict => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"Short URL conflicts with system URL, already-existing url, or is empty"}\n"#,
-            )),
+        let (body, status, content_type): (Cow<str>, StatusCode, &'static str) = match self {
+            Errors::IncorrectAuth => (
+                r#"{"error":"Authentication failed"}"#.into(),
+                StatusCode::UNAUTHORIZED,
+                "application/json",
+            ),
+            Errors::BadRequest => (
+                r#"{"error":"Missing header or malformed json"}"#.into(),
+                StatusCode::BAD_REQUEST,
+                "application/json",
+            ),
+            Errors::NotFound => (
+                include_str!("resources/404.html").into(),
+                StatusCode::NOT_FOUND,
+                "text/html",
+            ),
+            Errors::NotFoundJson => (
+                r#"{"error":"Link not found"}"#.into(),
+                StatusCode::NOT_FOUND,
+                "application/json",
+            ),
+            Errors::UrlConflict => (
+                r#"{"error":"Short URL conflicts with system URL, already-existing url, or is empty"}"#.into(),
+                StatusCode::CONFLICT,
+                "application/json",
+                ),
+            Errors::DbError(e) => (
+                format!(r#"{{"error":"Database returned an error: {:?}"}}"#, e).into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            Errors::DbNotFound => (
+                r#"{"error":"Database pool not found"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            Errors::UrlsNotFound => (
+                r#"{"error":"Internal URL mapping list not found"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            Errors::DisallowedNotFound => (
+                r#"{"error":"Internal disallowed URL list not found"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            Errors::ConfigNotFound => (
+                r#"{"error":"Internal config not found"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            )
         };
-        let status = match self {
-            Errors::IncorrectAuth => axum::http::status::StatusCode::UNAUTHORIZED,
-            Errors::InternalError => axum::http::status::StatusCode::INTERNAL_SERVER_ERROR,
-            Errors::BadRequest => axum::http::status::StatusCode::BAD_REQUEST,
-            Errors::NotFound => axum::http::status::StatusCode::NOT_FOUND,
-            Errors::NotFoundJson => axum::http::status::StatusCode::NOT_FOUND,
-            Errors::UrlConflict => axum::http::status::StatusCode::CONFLICT,
-        };
-        let content_type: HeaderValue;
-        if matches!(self, Errors::NotFound) {
-            content_type = axum::http::HeaderValue::from_static("text/html")
-        } else {
-            content_type = axum::http::HeaderValue::from_static("application/json")
-        }
+
         axum::response::Response::builder()
             .header(axum::http::header::CONTENT_TYPE, content_type)
             .status(status)
-            .body(body)
+            .body(boxed(Full::from(body)))
             .unwrap()
     }
 }
@@ -102,7 +136,7 @@ impl axum::extract::FromRequest<axum::body::Body> for Authorization {
         let password =
             String::from_utf8(auth_password.as_bytes().into()).map_err(|_| Errors::BadRequest)?;
         let config = match crate::CONFIG.get() {
-            None => return Err(Errors::InternalError),
+            None => return Err(Errors::C),
             Some(config) => config,
         };
         let result = sha2::Sha256::digest(password)
