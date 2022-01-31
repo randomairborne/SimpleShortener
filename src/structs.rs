@@ -180,7 +180,7 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
             existing_hash.unwrap_or("(failed to get proper password hash)")
         );
 
-        if existing_hash.map_or(false, |user| user == &result) {
+        if existing_hash.map_or(false, |user| user == result) {
             Ok(Self)
         } else {
             Err(Errors::IncorrectAuth)
