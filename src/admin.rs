@@ -1,6 +1,5 @@
 use crate::structs::{Add, Authorization, Delete, Edit, Errors, List};
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
 use axum::Json;
 
 pub async fn list(_: crate::structs::Authorization) -> Result<Json<List>, Errors> {

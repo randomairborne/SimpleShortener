@@ -112,7 +112,10 @@ impl axum::response::IntoResponse for Errors {
         };
 
         axum::response::Response::builder()
-            .header(axum::http::header::CONTENT_TYPE, content_type)
+            .header(
+                axum::http::header::CONTENT_TYPE,
+                HeaderValue::from_static(content_type),
+            )
             .status(status)
             .body(boxed(Full::from(body)))
             .unwrap()
