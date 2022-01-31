@@ -105,7 +105,7 @@ async fn main() {
     // Checks for a PORT environment variable
     let port = match std::env::var("PORT").map(|x| x.parse::<u16>()) {
         Ok(Ok(port)) => port,
-        Err(_) => config.port.unwrap_or_else(|| config.port.expect("Database URI not set!")),
+        Err(_) => config.port.expect("Database URI not set!"),
         Ok(Err(e)) => {
             eprintln!("port environment variable invalid: {:#?}", e);
             std::process::exit(3);
