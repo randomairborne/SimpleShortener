@@ -11,7 +11,7 @@ pub async fn list(_: crate::structs::Authorization) -> Result<Json<List>, Errors
 pub async fn edit(
     _: Authorization,
     Json(Edit { link, destination }): Json<Edit>,
-) -> Result<&str, Errors> {
+) -> Result<&'static str, Errors> {
     let links = crate::URLS.get().ok_or(Errors::UrlsNotFound)?;
     let _: () = links
         .contains_key(&link)
@@ -43,7 +43,10 @@ pub async fn edit(
     Ok(r#"{"message":"Link edited!"}\n"#)
 }
 
-pub async fn delete(_: Authorization, Json(Delete { link }): Json<Delete>) -> Result<&str, Errors> {
+pub async fn delete(
+    _: Authorization,
+    Json(Delete { link }): Json<Delete>,
+) -> Result<&'static str, Errors> {
     let links = crate::URLS.get().ok_or(Errors::UrlsNotFound)?;
     let _: () = links
         .contains_key(&link)
