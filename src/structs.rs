@@ -34,7 +34,7 @@ pub struct List {
     pub links: dashmap::DashMap<String, String>,
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Debug)]
 pub enum Errors {
     IncorrectAuth,
     BadRequest,
