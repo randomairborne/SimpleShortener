@@ -44,42 +44,25 @@ pub async fn edit(
     Ok(r#"{"message":"Link edited!"}\n"#)
 }
 
-pub async fn delete(_: Authorization, Json(payload): Json<Delete>) -> impl IntoResponse {
-    let links = match crate::URLS.get() {
-        None => return Err(Errors::InternalError),
-        Some(links) => links,
-    };
-    match links.get(&payload.link) {
-        None => {
-            tracing::trace!("Could not delete {}, not found", payload.link);
-            return Err(Errors::NotFoundJson);
-        }
-        Some(_) => {}
-    };
-    let disallowed_shortenings = match crate::DISALLOWED_SHORTENINGS.get() {
-        None => return Err(Errors::InternalError),
-        Some(ds) => ds,
-    };
-    if disallowed_shortenings.contains(payload.link.as_str()) {
-        return Err(Errors::UrlConflict);
-    }
-    let db = match crate::DB.get() {
-        None => return Err(Errors::InternalError),
-        Some(db) => db,
-    };
-    let sqlx_result = match sqlx::query!("DELETE FROM links WHERE link = $1", payload.link)
-        .execute(db)
-        .await
-    {
-        Ok(result) => result.rows_affected(),
-        Err(_) => return Err(Errors::InternalError),
-    };
-    if sqlx_result != 1 {
-        return Err(Errors::NotFoundJson);
-    }
-    links.remove(payload.link.as_str());
+pub async fn delete(_: Authorization, Json(Delete { link }): Json<Delete>) -> Result<&str, Errors> {
+    let links = crate::URLS.get().ok_or(Errors::UrlsNotFound)?;
+    let _: () = links
+        .contains_key(&link)
+        .then(|| ())
+        .ok_or(Errors::NotFoundJson)?;
 
-    Ok(r#"{"message":"Link removed!"}\n"#)
+    let db = crate::DB.get().ok_or(Errors::DbNotFound)?;
+    assert_ne!(
+        sqlx::query!("DELETE FROM links WHERE link = $1", link)
+            .execute(db)
+            .await?
+            .rows_affected(),
+        1,
+        "already checked there would be at least one row in the database but that row does not exist?"
+    );
+    links.remove(&link);
+
+    Ok(r#"{"message":"Link removed!"}"#)
 }
 
 pub async fn add(
