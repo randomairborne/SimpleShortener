@@ -5,15 +5,15 @@ services:
         image: postgres:10
         restart: always
         networks:
-            - simple_shortener
+            - simpleshortener
         volumes:
             - pg_data:/var/lib/postgresql/data
         environment:
-            POSTGRES_DB: simple_shortener
-            POSTGRES_USER: simple_shortener
-            POSTGRES_PASSWORD: simple_shortener
-    simple_shortener:
-        image: randomairborne/simple_shortener
+            POSTGRES_DB: simpleshortener
+            POSTGRES_USER: simpleshortener
+            POSTGRES_PASSWORD: simpleshortener
+    simpleshortener:
+        image: randomairborne/simpleshortener
         restart: always
         networks:
             - simple_shortener
@@ -24,8 +24,8 @@ services:
             - postgres
         environment:
             PORT: 24529
-            DATABASE_URI: postgresql://postgres?dbname=simple_shortener&user=simple_shortener&password=simple_shortener
+            DATABASE_URI: postgresql://postgres?dbname=simpleshortener&user=simpleshortener&password=simpleshortener
 volumes:
     pg_data:
 networks:
-    simple_shortener:
+    simpleshortener:
