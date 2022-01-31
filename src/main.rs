@@ -27,28 +27,22 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_env("LOG"))
         .init();
-    let mut args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        args.push(String::from("./config.toml"))
-    };
 
-    tracing::log::info!("Reading config {}", &args[1]);
-    let config_string = match std::fs::read_to_string(&args[1]) {
-        Ok(config_string) => config_string,
-        Err(err) => {
-            eprintln!("Failed to read config: {:#?}", err);
-            std::process::exit(1);
-        }
-    };
+    let cfg_path = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| String::from("./config.toml"));
+
+    tracing::log::info!("Reading config {}", &cfg_path);
+    let config_string = std::fs::read_to_string(&cfg_path).unwrap_or_else(|err| {
+        eprintln!("Failed to read config: {:#?}", err);
+        std::process::exit(1);
+    });
     // get config
-    tracing::log::info!("Parsing config {}", &args[1]);
-    let mut config = match toml::from_str::<structs::Config>(&config_string) {
-        Ok(config) => config,
-        Err(err) => {
-            eprintln!("Failed to parse config: {:#?}", err);
-            std::process::exit(2);
-        }
-    };
+    tracing::log::info!("Parsing config {}", &cfg_path);
+    let mut config = toml::from_str::<structs::Config>(&config_string).unwrap_or_else(|| {
+        eprintln!("Failed to parse config: {:#?}", err);
+        std::process::exit(2);
+    });
     // This looks scary, but it simply looks through the config for the user's hashed passwords and lowercases them.
     config
         .users
