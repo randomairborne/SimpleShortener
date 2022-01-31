@@ -9,14 +9,14 @@ services:
         volumes:
             - pg_data:/var/lib/postgresql/data
         environment:
-            POSTGRES_DB: simple_shortner
-            POSTGRES_USER: simple_shortner
-            POSTGRES_PASSWORD: simple_shortner
+            POSTGRES_DB: simple_shortener
+            POSTGRES_USER: simple_shortener
+            POSTGRES_PASSWORD: simple_shortener
     simple_shortner:
-        image: randomairborne/simple_shortner
+        image: randomairborne/simple_shortener
         restart: always
         networks:
-            - simple_shortner
+            - simple_shortener
         ports:
             # change external port here, not in config.toml
             - "127.0.0.1:24529:24529"
@@ -24,8 +24,8 @@ services:
             - postgres
         environment:
             PORT: 24529
-            DATABASE_URI: postgresql://postgres?dbname=simple_shortner&user=simple_shortner&password=simple_shortner
+            DATABASE_URI: postgresql://postgres?dbname=simple_shortener&user=simple_shortener&password=simple_shortener
 volumes:
     pg_data:
 networks:
-    simple_shortner:
+    simple_shortener:
