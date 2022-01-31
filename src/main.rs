@@ -39,7 +39,7 @@ async fn main() {
     });
     // get config
     tracing::log::info!("Parsing config {}", &cfg_path);
-    let mut config = toml::from_str::<structs::Config>(&config_string).unwrap_or_else(|| {
+    let mut config = toml::from_str::<structs::Config>(&config_string).unwrap_or_else(|err| {
         eprintln!("Failed to parse config: {:#?}", err);
         std::process::exit(2);
     });
@@ -60,7 +60,7 @@ async fn main() {
         .max_connections(2)
         .connect(config.database.as_str())
         .await
-        .unwrap_or_else(|| {
+        .unwrap_or_else(|err| {
             eprintln!("Failed to connect to database: {:#?}", err);
             std::process::exit(3);
         });
@@ -101,7 +101,7 @@ async fn main() {
         .route("/favicon.ico", get(files::favicon));
 
     // Checks for a PORT environment variable
-    let port = match std::env::var("PORT").map(str::parse::<u16>) {
+    let port = match std::env::var("PORT").map(|x| x.parse::<u16>()) {
         Ok(Ok(port)) => port,
         Err(_) => config.port,
         Ok(Err(e)) => {
