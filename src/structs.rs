@@ -172,12 +172,12 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
             .into_iter()
             .map(|x| format!("{:02x}", x))
             .collect::<String>();
-        let existing_hash = config.users.get(&username);
+        let existing_hash = config.users.get(&username).map(String::as_str);
         tracing::trace!(
             "Attempting to log in user {}, supplied password hash is {}, correct password hash is {}",
             username,
             result,
-            existing_hash.unwrap_or_else(|| &"(failed to get proper password hash)".to_string())
+            existing_hash.unwrap_or("(failed to get proper password hash)")
         );
 
         if existing_hash.map_or(false, |user| user == &result) {
