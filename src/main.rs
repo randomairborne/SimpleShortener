@@ -56,17 +56,15 @@ async fn main() {
         .set(config.clone())
         .expect("Failed to write to config OnceCell");
 
-    let pool = match sqlx::postgres::PgPoolOptions::new()
+    let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(2)
         .connect(config.database.as_str())
         .await
-    {
-        Ok(pool) => pool,
-        Err(err) => {
+        .unwrap_or_else(|| {
             eprintln!("Failed to connect to database: {:#?}", err);
             std::process::exit(3);
-        }
-    };
+        });
+
     sqlx::migrate!()
         .run(&pool)
         .await
@@ -100,12 +98,13 @@ async fn main() {
         .route("/favicon.ico", get(files::favicon));
 
     // Checks for a PORT environment variable
-    let port = match std::env::var("PORT") {
-        Ok(port_string) => match port_string.parse::<u16>() {
-            Ok(port) => port,
-            Err(_) => config.port,
-        },
+    let port = match std::env::var("PORT").map(str::parse::<u16>) {
+        Ok(Ok(port)) => port,
         Err(_) => config.port,
+        Ok(Err(e)) => {
+            eprintln!("port environment variable invalid: {:#?}", e);
+            std::process::exit(3);
+        }
     };
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
