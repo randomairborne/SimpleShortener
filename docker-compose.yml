@@ -5,14 +5,14 @@ services:
         image: postgres:10
         restart: always
         networks:
-            - simple_shortner
+            - simple_shortener
         volumes:
             - pg_data:/var/lib/postgresql/data
         environment:
             POSTGRES_DB: simple_shortener
             POSTGRES_USER: simple_shortener
             POSTGRES_PASSWORD: simple_shortener
-    simple_shortner:
+    simple_shortener:
         image: randomairborne/simple_shortener
         restart: always
         networks:
