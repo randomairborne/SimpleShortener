@@ -1,5 +1,18 @@
 {
   "db": "PostgreSQL",
+  "222bb655dab562958d02f2dc589e031e4878aca354740e03429ea2db068ba057": {
+    "query": "UPDATE links SET destination = $1 WHERE link = $2",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "9acb88ab18ab5d32966c058ddac7c3bfd2bb5266c587945a7cd8d5ce0e3140dc": {
     "query": "SELECT * FROM links",
     "describe": {
@@ -24,21 +37,8 @@
       ]
     }
   },
-  "ad74dd627994634fbb1aa87d353a34f6da8415e59d6db1f7de715294fe79f723": {
-    "query": "UPDATE links SET destination = $1 WHERE link = $2 ",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Text"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "e6629dd88870d27813b078e6188bfd031138fcd40235c54b5a9d9a0dd9782cee": {
-    "query": "INSERT INTO links VALUES ($1,$2)",
+  "da915045ea23d09d4edd73b269f883e6f2e609f61a30cb0d9d467167a6801dd8": {
+    "query": "INSERT INTO links VALUES ($1, $2)",
     "describe": {
       "columns": [],
       "parameters": {

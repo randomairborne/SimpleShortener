@@ -1,6 +1,9 @@
+use axum::body::{boxed, Full};
+use axum::http::status::StatusCode;
 use axum::http::HeaderValue;
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
+use std::borrow::Cow;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
@@ -31,56 +34,109 @@ pub struct List {
     pub links: dashmap::DashMap<String, String>,
 }
 
-#[derive(Serialize, Clone, Debug)]
-pub enum Errors {
+#[derive(Debug)]
+pub enum WebServerError {
     IncorrectAuth,
-    InternalError,
     BadRequest,
     NotFound,
     NotFoundJson,
     UrlConflict,
+
+    DbError(sqlx::Error),
+    InvalidUri(axum::http::uri::InvalidUri),
+
+    DbNotFound,
+    UrlsNotFound,
+    DisallowedNotFound,
+    ConfigNotFound,
+
+    MissingHeaders,
 }
 
-impl axum::response::IntoResponse for Errors {
+impl From<sqlx::Error> for WebServerError {
+    fn from(e: sqlx::Error) -> Self {
+        Self::DbError(e)
+    }
+}
+
+impl From<axum::http::uri::InvalidUri> for WebServerError {
+    fn from(e: axum::http::uri::InvalidUri) -> Self {
+        Self::InvalidUri(e)
+    }
+}
+
+impl axum::response::IntoResponse for WebServerError {
     fn into_response(self) -> axum::response::Response {
-        let body = match self {
-            Errors::IncorrectAuth => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"Authentication failed"}\n"#,
-            )),
-            Errors::InternalError => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"There was a serious internal error"}\n"#,
-            )),
-            Errors::BadRequest => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"Missing header or malformed json"}"#,
-            )),
-            Errors::NotFound => {
-                axum::body::boxed(axum::body::Full::from(include_str!("resources/404.html")))
-            }
-            Errors::NotFoundJson => {
-                axum::body::boxed(axum::body::Full::from(r#"{"error":"Link not found"}\n"#))
-            }
-            Errors::UrlConflict => axum::body::boxed(axum::body::Full::from(
-                r#"{"error":"Short URL conflicts with system URL, already-existing url, or is empty"}\n"#,
-            )),
+        let (body, status, content_type): (Cow<str>, StatusCode, &'static str) = match self {
+            WebServerError::IncorrectAuth => (
+                r#"{"error":"Authentication failed"}"#.into(),
+                StatusCode::UNAUTHORIZED,
+                "application/json",
+            ),
+            WebServerError::BadRequest => (
+                r#"{"error":"Missing header or malformed json"}"#.into(),
+                StatusCode::BAD_REQUEST,
+                "application/json",
+            ),
+            WebServerError::NotFound => (
+                include_str!("resources/404.html").into(),
+                StatusCode::NOT_FOUND,
+                "text/html",
+            ),
+            WebServerError::NotFoundJson => (
+                r#"{"error":"Link not found"}"#.into(),
+                StatusCode::NOT_FOUND,
+                "application/json",
+            ),
+            WebServerError::UrlConflict => (
+                r#"{"error":"Short URL conflicts with system URL, already-existing url, or is empty"}"#.into(),
+                StatusCode::CONFLICT,
+                "application/json",
+                ),
+            WebServerError::DbError(e) => (
+                format!(r#"{{"error":"Database returned an error: {:?}"}}"#, e).into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            WebServerError::InvalidUri(e) => (
+                format!(r#"{{"error":"The redirect URI is invalid: {}"}}"#, e).into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            WebServerError::DbNotFound => (
+                r#"{"error":"Database pool not found"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            WebServerError::UrlsNotFound => (
+                r#"{"error":"Internal URL mapping list not found"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            WebServerError::DisallowedNotFound => (
+                r#"{"error":"Internal disallowed URL list not found"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            WebServerError::ConfigNotFound => (
+                r#"{"error":"Internal config not found"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+            WebServerError::MissingHeaders => (
+                r#"{"error":"another extractor took headers"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
         };
-        let status = match self {
-            Errors::IncorrectAuth => axum::http::status::StatusCode::UNAUTHORIZED,
-            Errors::InternalError => axum::http::status::StatusCode::INTERNAL_SERVER_ERROR,
-            Errors::BadRequest => axum::http::status::StatusCode::BAD_REQUEST,
-            Errors::NotFound => axum::http::status::StatusCode::NOT_FOUND,
-            Errors::NotFoundJson => axum::http::status::StatusCode::NOT_FOUND,
-            Errors::UrlConflict => axum::http::status::StatusCode::CONFLICT,
-        };
-        let content_type: HeaderValue;
-        if matches!(self, Errors::NotFound) {
-            content_type = axum::http::HeaderValue::from_static("text/html")
-        } else {
-            content_type = axum::http::HeaderValue::from_static("application/json")
-        }
+
         axum::response::Response::builder()
-            .header(axum::http::header::CONTENT_TYPE, content_type)
+            .header(
+                axum::http::header::CONTENT_TYPE,
+                HeaderValue::from_static(content_type),
+            )
             .status(status)
-            .body(body)
+            .body(boxed(Full::from(body)))
             .unwrap()
     }
 }
@@ -88,45 +144,46 @@ impl axum::response::IntoResponse for Errors {
 pub struct Authorization;
 
 #[async_trait::async_trait]
-impl axum::extract::FromRequest<axum::body::Body> for Authorization {
-    type Rejection = Errors;
+impl<T: Send> axum::extract::FromRequest<T> for Authorization {
+    type Rejection = WebServerError;
     async fn from_request(
-        req: &mut axum::extract::RequestParts<axum::body::Body>,
+        req: &mut axum::extract::RequestParts<T>,
     ) -> Result<Self, Self::Rejection> {
-        let headers = req.headers().ok_or_else(|| Errors::InternalError)?;
+        let headers = req.headers().ok_or(WebServerError::MissingHeaders)?;
 
-        let auth_username = headers.get("username").ok_or_else(|| Errors::BadRequest)?;
-        let auth_password = headers.get("password").ok_or_else(|| Errors::BadRequest)?;
-        let username =
-            String::from_utf8(auth_username.as_bytes().into()).map_err(|_| Errors::BadRequest)?;
-        let password =
-            String::from_utf8(auth_password.as_bytes().into()).map_err(|_| Errors::BadRequest)?;
-        let config = match crate::CONFIG.get() {
-            None => return Err(Errors::InternalError),
-            Some(config) => config,
-        };
+        let username = String::from_utf8(
+            headers
+                .get("username")
+                .ok_or(WebServerError::BadRequest)?
+                .as_bytes()
+                .into(),
+        )
+        .map_err(|_| WebServerError::BadRequest)?;
+        let password = String::from_utf8(
+            headers
+                .get("password")
+                .ok_or(WebServerError::BadRequest)?
+                .as_bytes()
+                .into(),
+        )
+        .map_err(|_| WebServerError::BadRequest)?;
+        let config = crate::CONFIG.get().ok_or(WebServerError::ConfigNotFound)?;
         let result = sha2::Sha256::digest(password)
             .into_iter()
             .map(|x| format!("{:02x}", x))
             .collect::<String>();
+        let existing_hash = config.users.get(&username).map(String::as_str);
         tracing::trace!(
             "Attempting to log in user {}, supplied password hash is {}, correct password hash is {}",
             username,
             result,
-            config
-            .users
-            .get(&username)
-            .unwrap_or(&"(failed to get proper password hash)".to_string())
-
+            existing_hash.unwrap_or("(failed to get proper password hash)")
         );
-        if config
-            .users
-            .get(&username)
-            .map_or(false, |user| user == &result)
-        {
+
+        if existing_hash.map_or(false, |user| user == result) {
             Ok(Self)
         } else {
-            Err(Errors::IncorrectAuth)
+            Err(WebServerError::IncorrectAuth)
         }
     }
 }

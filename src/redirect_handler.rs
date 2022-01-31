@@ -1,20 +1,14 @@
-use std::str::FromStr;
+use crate::structs::WebServerError;
+use axum::extract::Path;
+use axum::response::Redirect;
 
-pub async fn redirect(
-    axum::extract::Path(path): axum::extract::Path<String>,
-) -> impl axum::response::IntoResponse {
-    let urls = match crate::URLS.get() {
-        None => return Err(crate::structs::Errors::InternalError),
-        Some(config) => config,
-    };
-    let destination_url = match urls.get(path.as_str()) {
-        None => return Err(crate::structs::Errors::NotFound),
-        Some(entry) => entry.value(),
-    };
+pub async fn redirect(Path(path): Path<String>) -> Result<Redirect, WebServerError> {
+    let destination_url = crate::URLS
+        .get()
+        .ok_or(WebServerError::UrlsNotFound)?
+        .get(&path)
+        .ok_or(WebServerError::NotFound)?
+        .value();
     tracing::trace!("Path: {}, Destination: {}", path, destination_url);
-    let clean_destination_url = match axum::http::Uri::from_str(destination_url) {
-        Ok(url) => url,
-        Err(_) => return Err(crate::structs::Errors::InternalError),
-    };
-    Ok(axum::response::Redirect::permanent(clean_destination_url))
+    Ok(Redirect::permanent(destination_url.parse()?))
 }
