@@ -1,4 +1,3 @@
-use tracing_subscriber::fmt::format;
 
 // basic handler that responds with a static string
 pub async fn root() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
