@@ -21,7 +21,6 @@ async fn main() {
             String::from("favicon.ico"),
             String::from("simpleshortener_admin_api"),
             String::from("simpleshortener_admin_panel"),
-            String::from("simpleshortener_static_files"),
         ]))
         .expect("Failed to set disallowed shortenings");
     tracing_subscriber::fmt()
@@ -57,7 +56,8 @@ async fn main() {
         .expect("Failed to write to config OnceCell");
 
     // Checks for a PORT environment variable
-    let database_uri = std::env::var("DATABASE_URI").unwrap_or_else(|_| config.database.expect("Database URI not set!"));
+    let database_uri = std::env::var("DATABASE_URI")
+        .unwrap_or_else(|_| config.database.expect("Database URI not set!"));
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(2)
         .connect(database_uri.as_str())
@@ -94,12 +94,9 @@ async fn main() {
         .route("/simpleshortener_admin_panel", get(files::panelhtml))
         .route("/simpleshortener_admin_panel/", get(files::panelhtml))
         .route("/simpleshortener_admin_panel/panel.js", get(files::paneljs))
-        .route("/simpleshortener_static_files/link.png", get(files::logo))
-        .route("/simpleshortener_static_files/font.woff", get(files::fontw))
-        .route(
-            "/simpleshortener_static_files/font.woff2",
-            get(files::fontw2),
-        )
+        .route("/simpleshortener_static/link.png", get(files::logo))
+        .route("/simpleshortener_static/font.woff", get(files::font))
+        .route("/simpleshortener_static/font.woff2", get(files::font2))
         .route("/favicon.ico", get(files::favicon));
 
     // Checks for a PORT environment variable

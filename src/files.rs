@@ -1,3 +1,5 @@
+use tracing_subscriber::fmt::format;
+
 // basic handler that responds with a static string
 pub async fn root() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
     let mut headers = axum::http::HeaderMap::new();
@@ -59,7 +61,7 @@ pub async fn paneljs() -> (axum::http::StatusCode, axum::http::HeaderMap, &'stat
 }
 
 // basic handler that responds with a static font file
-pub async fn fontw2() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
+pub async fn font2() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::CONTENT_TYPE,
@@ -74,7 +76,7 @@ pub async fn fontw2() -> (axum::http::StatusCode, axum::http::HeaderMap, &'stati
 }
 
 // basic handler that responds with a static font file
-pub async fn fontw() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
+pub async fn font() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::CONTENT_TYPE,
