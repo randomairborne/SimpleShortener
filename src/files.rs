@@ -1,4 +1,3 @@
-
 // basic handler that responds with a static string
 pub async fn root() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
     let mut headers = axum::http::HeaderMap::new();
