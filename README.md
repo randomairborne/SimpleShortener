@@ -1,4 +1,18 @@
 # Simple URL shortener
+
+## Docker install
+```bash
+mkdir -p /opt/simpleshortener/
+cd /opt/simpleshortener
+curl -fsSl https://raw.githubusercontent.com/randomairborne/SimpleShortener/master/docker-compose.yml -o docker-compose.yml
+echo "users = { IT = \"86ae7f34fa6f2df4487f293e671b4f12290cfb116b728d95d31b703759daf2c7\"}" > config.toml
+# Replace users with the proper username and password
+nano config.toml
+docker-compose up -d
+```
+
+## Hardware install
+Create this config file:
 ```toml
 # Port to run SimpleShortener on. Can be overridden with the `PORT` environment variable.
 port = 24529
