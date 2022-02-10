@@ -1,16 +1,6 @@
 // basic handler that responds with a static string
-pub async fn root() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
-    let mut headers = axum::http::HeaderMap::new();
-    headers.insert(
-        axum::http::header::CONTENT_TYPE,
-        axum::http::HeaderValue::from_static("text/html"),
-    );
-    tracing::trace!("Handling root request");
-    (
-        axum::http::StatusCode::OK,
-        headers,
-        include_str!("resources/root.html"),
-    )
+pub async fn root() -> Result<axum::response::Redirect, crate::structs::WebServerError> {
+    Ok(axum::response::Redirect::permanent("https://randomairborne.dev".parse()?))
 }
 
 // basic handler that responds with a static string
