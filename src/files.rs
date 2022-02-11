@@ -1,6 +1,8 @@
 // basic handler that responds with a static string
 pub async fn root() -> Result<axum::response::Redirect, crate::structs::WebServerError> {
-    Ok(axum::response::Redirect::permanent("https://randomairborne.dev".parse()?))
+    Ok(axum::response::Redirect::permanent(
+        "https://randomairborne.dev".parse()?,
+    ))
 }
 
 // basic handler that responds with a static string

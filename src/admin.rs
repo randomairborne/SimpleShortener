@@ -75,7 +75,7 @@ pub async fn add(
     Json(Add { link, destination }): Json<Add>,
 ) -> Result<(StatusCode, &'static str), WebServerError> {
     let links = crate::URLS.get().ok_or(WebServerError::UrlsNotFound)?;
-    let _: () = !(links.contains_key(&link))
+    let _: () = (!links.contains_key(&link))
         .then(|| ())
         .ok_or(WebServerError::UrlConflict)?;
 

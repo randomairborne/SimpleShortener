@@ -49,7 +49,7 @@ pub enum WebServerError {
     UrlsNotFound,
     DisallowedNotFound,
     ConfigNotFound,
-
+    InvalidRedirectUri,
     MissingHeaders,
 }
 
@@ -67,6 +67,7 @@ impl From<axum::http::uri::InvalidUri> for WebServerError {
 
 impl axum::response::IntoResponse for WebServerError {
     fn into_response(self) -> axum::response::Response {
+        tracing::error!("handling error: {:#?}", self);
         let (body, status, content_type): (Cow<str>, StatusCode, &'static str) = match self {
             WebServerError::IncorrectAuth => (
                 r#"{"error":"Authentication failed"}"#.into(),
@@ -128,6 +129,12 @@ impl axum::response::IntoResponse for WebServerError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
+WebServerError::InvalidRedirectUri => (
+                r#"{"error":"database returned invalid header"}"#.into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "application/json",
+            ),
+
         };
 
         axum::response::Response::builder()
