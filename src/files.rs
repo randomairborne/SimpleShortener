@@ -35,28 +35,14 @@ pub async fn panelhtml() -> (axum::http::StatusCode, axum::http::HeaderMap, &'st
         axum::http::header::CONTENT_TYPE,
         axum::http::HeaderValue::from_static("text/html"),
     );
-    tracing::trace!("Handling doc request");
+    tracing::trace!("Handling html request");
     (
         axum::http::StatusCode::OK,
         headers,
-        include_str!("resources/panel/panel.html"),
+        include_str!("resources/panel.html"),
     )
 }
 
-// basic handler that responds with a static string
-pub async fn paneljs() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
-    let mut headers = axum::http::HeaderMap::new();
-    headers.insert(
-        axum::http::header::CONTENT_TYPE,
-        axum::http::HeaderValue::from_static("text/javascript"),
-    );
-    tracing::trace!("Handling doc request");
-    (
-        axum::http::StatusCode::OK,
-        headers,
-        include_str!("resources/panel/panel.js"),
-    )
-}
 
 // basic handler that responds with a static font file
 pub async fn font2() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static [u8]) {
