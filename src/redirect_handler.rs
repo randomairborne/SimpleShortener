@@ -12,10 +12,10 @@ pub async fn redirect(
         .value();
     tracing::trace!("Path: {}, Destination: {}", path, destination_url);
     let mut headers = axum::http::HeaderMap::new();
-    headers.insert(
-        axum::http::header::LOCATION,
-        axum::http::HeaderValue::from_str(destination_url)
-            .unwrap_or_else(|_| return Err(WebServerError::InvalidRedirectUri)),
-    );
+    let destination = match axum::http::HeaderValue::from_str(destination_url) {
+        Ok(dest) => dest,
+        Err(_) => return Err(WebServerError::InvalidRedirectUri),
+    };
+    headers.insert(axum::http::header::LOCATION, destination);
     Ok((axum::http::StatusCode::PERMANENT_REDIRECT, headers))
 }

@@ -1,3 +1,4 @@
+use std::ops::Not;
 use crate::structs::{Add, Authorization, Delete, Edit, List, WebServerError};
 use axum::http::StatusCode;
 use axum::Json;
@@ -83,8 +84,9 @@ pub async fn add(
         .get()
         .ok_or(WebServerError::DisallowedNotFound)?
         .contains(&link)
+        .not()
         .then(|| ())
-        .ok_or(WebServerError::UrlConflict)?;
+        .ok_or(WebServerError::NotFoundJson)?;
 
     let db = crate::DB.get().ok_or(WebServerError::DbNotFound)?;
 
