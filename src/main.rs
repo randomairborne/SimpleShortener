@@ -93,7 +93,6 @@ async fn main() {
         .route("/simpleshortener_admin_api/list", get(admin::list))
         .route("/simpleshortener_admin_panel", get(files::panelhtml))
         .route("/simpleshortener_admin_panel/", get(files::panelhtml))
-        .route("/simpleshortener_admin_panel/panel.js", get(files::paneljs))
         .route("/simpleshortener_static/link.png", get(files::logo))
         .route("/simpleshortener_static/font.woff", get(files::font))
         .route("/simpleshortener_static/font.woff2", get(files::font2))
