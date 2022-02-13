@@ -5,6 +5,24 @@
     <title>SimpleShortener panel</title>
 </head>
 <body>
-This panel is work-in-progress. If you'd like to contribute, visit <a href="https://github.com/randomairborne/SimpleShortener">https://github.com/randomairborne/SimpleShortener</a>
+<input id="username"></input>
+<input type="password" id="password"></input>
+<button type="button" onclick="logIn();">Log In</button> 
+<ul>
+<li>hmmm</li>
+</ul>
+<script>
+function logIn() {
+
+
+data = fetch("/simpleshortener_admin_api/list", {
+  method: "GET",
+  headers: {'username': document.getElementById("username").value, 'password':document.getElementById("password").value}, 
+}).then(res => {
+  return res
+});
+console.log(data)
+}
+</script>
 </body>
 </html>
