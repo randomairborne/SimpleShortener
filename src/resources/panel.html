@@ -88,12 +88,12 @@ async function login() {
         let linkElement = document.createElement("input");
         linkElement.value = link;
         linkElement.placeholder = "Shortlink";
+        linkElement.setAttribute("size", "12");
 
         let destElement = document.createElement("input");
         destElement.value = linkArray[link];
         destElement.placeholder = "Destination";
-        
-        let splitElement = document.createElement("br");
+        linkElement.setAttribute("size", "50");
 
         let submitButton = document.createElement("button");
         submitButton.innerHTML = "Update";
@@ -107,10 +107,8 @@ async function login() {
         listElement.id = "link_list_" + idx;
         listElement.appendChild(linkElement);
         listElement.appendChild(destElement);
-        listElement.appendChild(splitElement);
         listElement.appendChild(submitButton);
         listElement.appendChild(deleteButton);
-        listElement.appendChild(splitElement);
         targetListElement.appendChild(listElement);
         idx++;
     }
