@@ -145,10 +145,12 @@ async function addNew() {
     let linkElement = document.createElement("input");
     linkElement.value = src;
     linkElement.placeholder = "Shortlink";
+    listElement.setAttribute("size", "12");
 
     let destElement = document.createElement("input");
     destElement.value = dst;
     destElement.placeholder = "Destination";
+    destElement.setAttribute("size", "50");
 
     let submitButton = document.createElement("button");
     submitButton.innerHTML = "Update";
