@@ -4,7 +4,18 @@
     <meta charset="UTF-8">
     <title>SimpleShortener panel</title>
     <style> body {
-        text-align: center
+        text-align: center;
+        background: #44484a;
+        color: #43baf4;
+        font-family: "JetBrains Mono", monospace;
+    }
+    @font-face {
+        font-family: 'JetBrains Mono';
+        src: url('/simpleshortener_static/font.woff2') format('woff2');        
+        url('/simpleshortener_static/font.woff') format('woff');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
     }
     </style>
 </head>
@@ -145,10 +156,12 @@ async function addNew() {
     let linkElement = document.createElement("input");
     linkElement.value = src;
     linkElement.placeholder = "Shortlink";
+    linkElement.setAttribute("size", "12");
 
     let destElement = document.createElement("input");
     destElement.value = dst;
     destElement.placeholder = "Destination";
+    destElement.setAttribute("size", "50");
 
     let submitButton = document.createElement("button");
     submitButton.innerHTML = "Update";
@@ -177,7 +190,7 @@ async function updateExisting(element) {
             {
                 headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
                 body: JSON.stringify({"link": src, "destination": dst}),
-                method: "POST",
+                method: "PATCH",
             }
             );
     if (!response.ok) {
@@ -196,7 +209,7 @@ async function deleteExisting(element) {
             {
                 headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
                 body: JSON.stringify({"link": src}),
-                method: "POST",
+                method: "DELETE",
             }
     );
     if (!response.ok) {

@@ -1,5 +1,7 @@
 # Port to run SimpleShortener on. Can be overridden with the `PORT` environment variable.
 port = 24529
+# Root of the site, this might link to your company's homepage.
+root = "https://randomairborne.dev/"
 # Postgres database URL.
 database = "postgres://simpleshortener:simpleshortener@localhost/simpleshortener"
 # A key:value list of username:sha256-hahed passwords <default admin/admin>
