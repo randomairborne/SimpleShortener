@@ -1,8 +1,8 @@
 [package]
 name = "simple_shortener"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
-description = "A very simple link shortener"
+description = "A quite simple link shortener"
 license = "MIT"
 repository = "https://github.com/randomairborne/SimpleShortener.git"
 
