@@ -4,25 +4,200 @@
     <meta charset="UTF-8">
     <title>SimpleShortener panel</title>
 </head>
-<body>
-<input id="username"></input>
-<input type="password" id="password"></input>
-<button type="button" onclick="logIn();">Log In</button> 
-<ul>
-<li>hmmm</li>
-</ul>
+<h1>SimpleShortener Panel</h1>
+<body onload="onLoad()">
+<div id="login">
+    <input id="username" placeholder="Username">
+    <br>
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <div id="login_status"></div>
+</div>
+
+<div id="panel" style="display: none">
+    <ul id="target_list" style="list-style: none">
+        <li><input placeholder="Shortlink" id="new_link_src"><input placeholder="Destination" id="new_link_dst"><button onclick="addNew()">Add</button></li>
+    </ul>
+    <button onclick="logout()">Log Out</button>
+</div>
+</body>
 <script>
-function logIn() {
+    const apiLocation = window.location.protocol + "//" + window.location.host;
+    var username = null;
+    var password = null;
+    var totalUrls = 0;
+</script>
 
+<script>
+async function onLoad() {
+    let user = window.localStorage.getItem("username");
+    if (user === null) return;
+    let password = window.localStorage.getItem("password");
+    if (password === null) return;
 
-data = fetch("/simpleshortener_admin_api/list", {
-  method: "GET",
-  headers: {'username': document.getElementById("username").value, 'password':document.getElementById("password").value}, 
-}).then(res => {
-  return res
-});
-console.log(data)
+    document.getElementById("username").value = user;
+    document.getElementById("password").value = password;
+    await login();
+}
+
+async function logout() {
+    window.localStorage.removeItem("username");
+    window.localStorage.removeItem("password");
+
+    window.location.reload()
+}
+
+async function login() {
+    const statusElement = document.getElementById("login_status");
+    const loginElement = document.getElementById("login");
+    const panelElement = document.getElementById("panel");
+    const usernameField = document.getElementById("username");
+    const passwordField = document.getElementById("password");
+    const targetListElement = document.getElementById("target_list");
+    statusElement.innerHTML = "Loading...";
+
+    username = usernameField.value;
+    password = passwordField.value;
+    console.log("logging in with username " + username + " and password " + password);
+
+    let response = null;
+    try {
+        response = await fetch(apiLocation + "/simpleshortener_admin_api/list", {headers: {"Username": username, "Password": password}});
+    } catch (e) {
+        statusElement.innerHTML = "Failed to fetch list due to an error. Check console for more info.";
+        return;
+    }
+    let data = await response.json();
+    if (!response.ok) {
+        statusElement.innerHTML = "Got HTTP code " + response.status + ". Reason: " + (data["error"] ? data["error"] : "unknown");
+        return;
+    }
+    statusElement.innerHTML = "logged in successfully!";
+
+    window.localStorage.setItem("username", username);
+    window.localStorage.setItem("password", password);
+
+    const linkArray = data["links"];
+    let idx = 0;
+    for (const link in linkArray) {
+        let linkElement = document.createElement("input");
+        linkElement.value = link;
+        linkElement.placeholder = "Shortlink";
+
+        let destElement = document.createElement("input");
+        destElement.value = linkArray[link];
+        destElement.placeholder = "Destination";
+
+        let submitButton = document.createElement("button");
+        submitButton.innerHTML = "Update";
+        submitButton.setAttribute("onclick", "updateExisting(this)");
+
+        let deleteButton = document.createElement("button");
+        deleteButton.innerHTML = "Delete";
+        deleteButton.setAttribute("onclick", "deleteExisting(this)");
+
+        var listElement = document.createElement('li');
+        listElement.id = "link_list_" + idx;
+        listElement.appendChild(linkElement);
+        listElement.appendChild(destElement);
+        listElement.appendChild(submitButton);
+        listElement.appendChild(deleteButton);
+        targetListElement.appendChild(listElement);
+        idx++;
+    }
+    totalUrls = idx;
+
+    loginElement.style.display = "none";
+    panelElement.style.display = null;
+}
+
+async function addNew() {
+    const targetListElement = document.getElementById("target_list");
+    const srcElement = document.getElementById("new_link_src");
+    const dstElement = document.getElementById("new_link_dst");
+    const src = srcElement.value;
+    const dst = dstElement.value;
+
+    let response = await fetch(
+            apiLocation + "/simpleshortener_admin_api/add",
+            {
+                headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
+                body: JSON.stringify({"link": src, "destination": dst}),
+                method: "POST",
+            }
+    );
+    if (!response.ok) {
+        let data = await response.json();
+        alert("Got HTTP code " + response.status + ". Reason: " + (data["error"] ? data["error"] : "unknown"));
+        return;
+    }
+
+    srcElement.value = "";
+    dstElement.value = "";
+
+    let linkElement = document.createElement("input");
+    linkElement.value = src;
+    linkElement.placeholder = "Shortlink";
+
+    let destElement = document.createElement("input");
+    destElement.value = dst;
+    destElement.placeholder = "Destination";
+
+    let submitButton = document.createElement("button");
+    submitButton.innerHTML = "Update";
+    submitButton.setAttribute("onclick", "updateExisting(this)");
+
+    let deleteButton = document.createElement("button");
+    deleteButton.innerHTML = "Delete";
+    deleteButton.setAttribute("onclick", "deleteExisting(this)");
+
+    var listElement = document.createElement('li');
+    listElement.id = "link_list_" + totalUrls;
+    listElement.appendChild(linkElement);
+    listElement.appendChild(destElement);
+    listElement.appendChild(submitButton);
+    listElement.appendChild(deleteButton);
+    targetListElement.appendChild(listElement);
+    totalUrls++;
+}
+
+async function updateExisting(element) {
+    let children = element.parentElement.childNodes;
+    let src = children.item(0).value;
+    let dst = children.item(1).value;
+    let response = await fetch(
+            apiLocation + "/simpleshortener_admin_api/edit",
+            {
+                headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
+                body: JSON.stringify({"link": src, "destination": dst}),
+                method: "POST",
+            }
+            );
+    if (!response.ok) {
+        let data = await response.json();
+        alert("Got HTTP code " + response.status + ". Reason: " + (data["error"] ? data["error"] : "unknown"));
+    } else {
+        alert("Updated URL successfully.");
+    }
+}
+
+async function deleteExisting(element) {
+    let parent = element.parentElement;
+    let src = parent.childNodes.item(0).value;
+    let response = await fetch(
+            apiLocation + "/simpleshortener_admin_api/delete",
+            {
+                headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
+                body: JSON.stringify({"link": src}),
+                method: "POST",
+            }
+    );
+    if (!response.ok) {
+        let data = await response.json();
+        alert("Got HTTP code " + response.status + ". Reason: " + (data["error"] ? data["error"] : "unknown"));
+    } else {
+        parent.parentElement.removeChild(parent);
+    }
 }
 </script>
-</body>
 </html>
