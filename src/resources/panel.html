@@ -21,7 +21,7 @@
 
 <div id="panel" style="display: none">
     <ul id="target_list" style="list-style: none">
-        <li><input placeholder="Shortlink" id="new_link_src"><input placeholder="Destination" id="new_link_dst"><button onclick="addNew()">Add</button></li>
+        <li><input placeholder="Shortlink" id="new_link_src"><input placeholder="Destination" id="new_link_dst"><br><button onclick="addNew()">Add</button></li>
     </ul>
     <button onclick="logout()">Log Out</button>
 </div>
@@ -92,6 +92,8 @@ async function login() {
         let destElement = document.createElement("input");
         destElement.value = linkArray[link];
         destElement.placeholder = "Destination";
+        
+        let splitElement = document.createElement("br");
 
         let submitButton = document.createElement("button");
         submitButton.innerHTML = "Update";
@@ -105,6 +107,7 @@ async function login() {
         listElement.id = "link_list_" + idx;
         listElement.appendChild(linkElement);
         listElement.appendChild(destElement);
+        listElement.appendChild(splitElement);
         listElement.appendChild(submitButton);
         listElement.appendChild(deleteButton);
         targetListElement.appendChild(listElement);
