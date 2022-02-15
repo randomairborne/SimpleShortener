@@ -21,7 +21,7 @@
 
 <div id="panel" style="display: none">
     <ul id="target_list" style="list-style: none">
-        <li><input placeholder="Shortlink" id="new_link_src"><input placeholder="Destination" id="new_link_dst"><button onclick="addNew()">Add</button></li>
+        <li><input placeholder="Shortlink" id="new_link_src" size="12"><input placeholder="Destination" id="new_link_dst" size="50"><button onclick="addNew()">Add</button></li>
     </ul>
     <button onclick="logout()">Log Out</button>
 </div>
@@ -88,10 +88,12 @@ async function login() {
         let linkElement = document.createElement("input");
         linkElement.value = link;
         linkElement.placeholder = "Shortlink";
+        linkElement.setAttribute("size", "12");
 
         let destElement = document.createElement("input");
         destElement.value = linkArray[link];
         destElement.placeholder = "Destination";
+        destElement.setAttribute("size", "50");
 
         let submitButton = document.createElement("button");
         submitButton.innerHTML = "Update";
