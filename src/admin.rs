@@ -26,6 +26,7 @@ pub async fn edit(
         .get()
         .ok_or(WebServerError::DisallowedNotFound)?
         .contains(&link)
+        .not()
         .then(|| ())
         .ok_or(WebServerError::UrlConflict)?;
 
