@@ -26,11 +26,12 @@ pub async fn edit(
         .get()
         .ok_or(WebServerError::DisallowedNotFound)?
         .contains(&link)
+        .not()
         .then(|| ())
         .ok_or(WebServerError::UrlConflict)?;
 
     let db = crate::DB.get().ok_or(WebServerError::DbNotFound)?;
-    assert_ne!(
+    assert_eq!(
         sqlx::query!(
             "UPDATE links SET destination = $1 WHERE link = $2",
             destination,
@@ -58,7 +59,7 @@ pub async fn delete(
         .ok_or(WebServerError::NotFoundJson)?;
 
     let db = crate::DB.get().ok_or(WebServerError::DbNotFound)?;
-    assert_ne!(
+    assert_eq!(
         sqlx::query!("DELETE FROM links WHERE link = $1", link)
             .execute(db)
             .await?
