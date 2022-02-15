@@ -1,7 +1,7 @@
-use std::ops::Not;
 use crate::structs::{Add, Authorization, Delete, Edit, List, WebServerError};
 use axum::http::StatusCode;
 use axum::Json;
+use std::ops::Not;
 
 pub async fn list(_: crate::structs::Authorization) -> Result<Json<List>, WebServerError> {
     Ok(Json(List {
