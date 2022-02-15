@@ -177,7 +177,7 @@ async function updateExisting(element) {
             {
                 headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
                 body: JSON.stringify({"link": src, "destination": dst}),
-                method: "POST",
+                method: "PATCH",
             }
             );
     if (!response.ok) {
@@ -196,7 +196,7 @@ async function deleteExisting(element) {
             {
                 headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
                 body: JSON.stringify({"link": src}),
-                method: "POST",
+                method: "DELETE",
             }
     );
     if (!response.ok) {
