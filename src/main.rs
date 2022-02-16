@@ -3,7 +3,7 @@ mod files;
 mod redirect_handler;
 mod structs;
 
-use axum::{routing::get, routing::post, Router};
+use axum::{routing::get, routing::put, routing::patch, routing::delete, Router};
 use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
 
@@ -87,15 +87,9 @@ async fn main() {
         .route("/:path", get(redirect_handler::redirect))
         .route("/simpleshortener_admin_api", get(files::doc))
         .route("/simpleshortener_admin_api/", get(files::doc))
-        .route(
-            "/simpleshortener_admin_api/edit",
-            post(admin::edit).patch(admin::edit),
-        )
-        .route(
-            "/simpleshortener_admin_api/delete",
-            post(admin::delete).delete(admin::delete),
-        )
-        .route("/simpleshortener_admin_api/add", post(admin::add))
+        .route("/simpleshortener_admin_api/edit", patch(admin::edit))
+        .route("/simpleshortener_admin_api/delete", delete(admin::delete))
+        .route("/simpleshortener_admin_api/add", put(admin::add))
         .route("/simpleshortener_admin_api/list", get(admin::list))
         .route("/simpleshortener_admin_panel", get(files::panelhtml))
         .route("/simpleshortener_admin_panel/", get(files::panelhtml))
