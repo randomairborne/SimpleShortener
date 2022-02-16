@@ -84,7 +84,7 @@ async fn main() {
     DB.set(pool).expect("Failed to set database OnceCell");
     // build our application with a route
     let app = Router::new()
-        .route("/", get(files::root))
+        .route("/", get(redirect_handler::root))
         .route("/:path", get(redirect_handler::redirect))
         .route("/simpleshortener_admin_api", get(files::doc))
         .route("/simpleshortener_admin_api/", get(files::doc))
