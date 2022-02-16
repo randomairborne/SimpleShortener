@@ -1036,8 +1036,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "simple_shortener"
-version = "1.0.0"
+name = "simpleshortener"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "axum",
