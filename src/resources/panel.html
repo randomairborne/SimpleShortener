@@ -146,7 +146,7 @@ async function addNew() {
             {
                 headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
                 body: JSON.stringify({"link": src, "destination": dst}),
-                method: "POST",
+                method: "PUT",
             }
     );
     if (!response.ok) {
