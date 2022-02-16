@@ -20,7 +20,6 @@ pub async fn redirect(
     Ok((axum::http::StatusCode::PERMANENT_REDIRECT, headers))
 }
 
-
 // Checks if a specific config var exists or serves the default root
 pub async fn root() -> Result<
     (axum::http::StatusCode, axum::http::HeaderMap, &'static str),
@@ -29,10 +28,10 @@ pub async fn root() -> Result<
     tracing::trace!("Handling root request");
     let config = match crate::CONFIG.get() {
         None => return Err(crate::structs::WebServerError::ConfigNotFound),
-        Some(config) => config.clone(),
+        Some(config) => config,
     };
     let mut headers = axum::http::HeaderMap::new();
-    match config.root {
+    match &config.root {
         None => {
             headers.insert(
                 axum::http::header::CONTENT_TYPE,
