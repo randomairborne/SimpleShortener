@@ -21,6 +21,7 @@ async fn main() {
             String::from("favicon.ico"),
             String::from("simpleshortener_admin_api"),
             String::from("simpleshortener_admin_panel"),
+            String::from("simpleshortener_static"),
         ]))
         .expect("Failed to set disallowed shortenings");
     tracing_subscriber::fmt()
