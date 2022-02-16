@@ -3,7 +3,7 @@ mod files;
 mod redirect_handler;
 mod structs;
 
-use axum::{routing::get, routing::put, routing::patch, routing::delete, Router};
+use axum::{routing::delete, routing::get, routing::patch, routing::put, Router};
 use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
 
