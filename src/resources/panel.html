@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>SimpleShortener panel</title>
-    <style> body {
+    <style>
+    body {
         text-align: center;
         background: #44484a;
         color: #43baf4;
@@ -16,11 +17,14 @@
     }
     @font-face {
         font-family: 'JetBrains Mono';
-        src: url('/simpleshortener_static/font.woff2') format('woff2');        
-        url('/simpleshortener_static/font.woff') format('woff');
+        src: url('/simpleshortener/static/font.woff2') format('woff2');
+        url('/simpleshortener/static/font.woff') format('woff');
         font-weight: 400;
         font-style: normal;
         font-display: swap;
+    }
+    a {
+        color: #43baf4;
     }
     </style>
 </head>
@@ -41,6 +45,9 @@
     </ul>
     <button onclick="logout()">Log Out</button>
 </div>
+<br>
+<br>
+<a href="/simpleshortener/api/">API</a>
 </body>
 <script>
     const apiLocation = window.location.protocol + "//" + window.location.host;
@@ -83,7 +90,7 @@ async function login() {
 
     let response = null;
     try {
-        response = await fetch(apiLocation + "/simpleshortener_admin_api/list", {headers: {"Username": username, "Password": password}});
+        response = await fetch(apiLocation + "/simpleshortener/api/list", {headers: {"Username": username, "Password": password}});
     } catch (e) {
         statusElement.innerHTML = "Failed to fetch list due to an error. Check console for more info.";
         return;
@@ -142,7 +149,7 @@ async function addNew() {
     const dst = dstElement.value;
 
     let response = await fetch(
-            apiLocation + "/simpleshortener_admin_api/add",
+            apiLocation + "/simpleshortener/api/add",
             {
                 headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
                 body: JSON.stringify({"link": src, "destination": dst}),
@@ -191,7 +198,7 @@ async function updateExisting(element) {
     let src = children.item(0).value;
     let dst = children.item(1).value;
     let response = await fetch(
-            apiLocation + "/simpleshortener_admin_api/edit",
+            apiLocation + "/simpleshortener/api/edit",
             {
                 headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
                 body: JSON.stringify({"link": src, "destination": dst}),
@@ -210,7 +217,7 @@ async function deleteExisting(element) {
     let parent = element.parentElement;
     let src = parent.childNodes.item(0).value;
     let response = await fetch(
-            apiLocation + "/simpleshortener_admin_api/delete",
+            apiLocation + "/simpleshortener/api/delete",
             {
                 headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
                 body: JSON.stringify({"link": src}),

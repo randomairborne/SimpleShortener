@@ -19,9 +19,7 @@ async fn main() {
         .set(std::collections::HashSet::from([
             String::from(""),
             String::from("favicon.ico"),
-            String::from("simpleshortener_admin_api"),
-            String::from("simpleshortener_admin_panel"),
-            String::from("simpleshortener_static"),
+            String::from("simpleshortener"),
         ]))
         .expect("Failed to set disallowed shortenings");
     tracing_subscriber::fmt()
@@ -86,17 +84,17 @@ async fn main() {
     let app = Router::new()
         .route("/", get(redirect_handler::root))
         .route("/:path", get(redirect_handler::redirect))
-        .route("/simpleshortener_admin_api", get(files::doc))
-        .route("/simpleshortener_admin_api/", get(files::doc))
-        .route("/simpleshortener_admin_api/edit", patch(admin::edit))
-        .route("/simpleshortener_admin_api/delete", delete(admin::delete))
-        .route("/simpleshortener_admin_api/add", put(admin::add))
-        .route("/simpleshortener_admin_api/list", get(admin::list))
-        .route("/simpleshortener_admin_panel", get(files::panelhtml))
-        .route("/simpleshortener_admin_panel/", get(files::panelhtml))
-        .route("/simpleshortener_static/link.png", get(files::logo))
-        .route("/simpleshortener_static/font.woff", get(files::font))
-        .route("/simpleshortener_static/font.woff2", get(files::font2))
+        .route("/simpleshortener/api", get(files::doc))
+        .route("/simpleshortener/api/", get(files::doc))
+        .route("/simpleshortener/api/edit", patch(admin::edit))
+        .route("/simpleshortener/api/delete", delete(admin::delete))
+        .route("/simpleshortener/api/add", put(admin::add))
+        .route("/simpleshortener/api/list", get(admin::list))
+        .route("/simpleshortener", get(files::panelhtml))
+        .route("/simpleshortener/", get(files::panelhtml))
+        .route("/simpleshortener/static/link.png", get(files::logo))
+        .route("/simpleshortener/static/font.woff", get(files::font))
+        .route("/simpleshortener/static/font.woff2", get(files::font2))
         .route("/favicon.ico", get(files::favicon));
 
     // Checks for a PORT environment variable
