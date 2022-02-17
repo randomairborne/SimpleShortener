@@ -42,6 +42,7 @@ async fn main() {
         std::process::exit(2);
     });
     // This looks scary, but it simply looks through the config for the user's hashed passwords and lowercases them.
+    // TODO do this for the URL keys as well
     config
         .users
         // get mutable iterator over items
