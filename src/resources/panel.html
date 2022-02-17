@@ -26,26 +26,48 @@
     a {
         color: #43baf4;
     }
+    label {
+        display: block;
+    }
+    #login-button {
+        background-color: #4caf59; /* Green */
+        border: none;
+        color: white;
+        padding: 3px 5px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+    }
+    #logout-button {
+        background-color: #af4c4c; /* Red */
+        border: none;
+        color: white;
+        padding: 3px 5px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+    }
     </style>
 </head>
 <h1>SimpleShortener Panel</h1>
+<noscript>This panel unfortunately requires JavaScript.</noscript>
 <body onload="onLoad()">
 <div id="login">
-    <input id="username" placeholder="Username">
+    <input id="username-input" placeholder="Username">
     <br>
-    <input id="password" type="password" placeholder="Password">
+    <input id="password-input" type="password" placeholder="Password">
     <br>
-    <button onclick="login()">Login</button>
+    <br>
+    <button onclick="login()" id="login-button">Login</button>
     <div id="login_status"></div>
 </div>
-
 <div id="panel" style="display: none">
     <ul id="target_list" style="list-style: none">
         <li><input placeholder="Shortlink" id="new_link_src" size="12"><input placeholder="Destination" id="new_link_dst" size="50"><button onclick="addNew()">Add</button></li>
     </ul>
-    <button onclick="logout()">Log Out</button>
+
+    <button onclick="logout()" id="logout-button">Log Out</button>
 </div>
-<br>
 <br>
 <a href="/simpleshortener/api/">API</a>
 </body>
@@ -63,8 +85,8 @@ async function onLoad() {
     let password = window.localStorage.getItem("password");
     if (password === null) return;
 
-    document.getElementById("username").value = user;
-    document.getElementById("password").value = password;
+    document.getElementById("username-input").value = user;
+    document.getElementById("password-input").value = password;
     await login();
 }
 
@@ -79,8 +101,8 @@ async function login() {
     const statusElement = document.getElementById("login_status");
     const loginElement = document.getElementById("login");
     const panelElement = document.getElementById("panel");
-    const usernameField = document.getElementById("username");
-    const passwordField = document.getElementById("password");
+    const usernameField = document.getElementById("username-input");
+    const passwordField = document.getElementById("password-input");
     const targetListElement = document.getElementById("target_list");
     statusElement.innerHTML = "Loading...";
 
@@ -108,10 +130,8 @@ async function login() {
     const linkArray = data["links"];
     let idx = 0;
     for (const link in linkArray) {
-        let linkElement = document.createElement("input");
-        linkElement.value = link;
-        linkElement.placeholder = "Shortlink";
-        linkElement.setAttribute("size", "12");
+        let linkElement = document.createElement("label");
+        linkElement.innerText = link;
 
         let destElement = document.createElement("input");
         destElement.value = linkArray[link];
@@ -126,7 +146,7 @@ async function login() {
         deleteButton.innerHTML = "Delete";
         deleteButton.setAttribute("onclick", "deleteExisting(this)");
 
-        var listElement = document.createElement('li');
+        let listElement = document.createElement('li');
         listElement.id = "link_list_" + idx;
         listElement.appendChild(linkElement);
         listElement.appendChild(destElement);
@@ -165,10 +185,8 @@ async function addNew() {
     srcElement.value = "";
     dstElement.value = "";
 
-    let linkElement = document.createElement("input");
-    linkElement.value = src;
-    linkElement.placeholder = "Shortlink";
-    linkElement.setAttribute("size", "12");
+    let linkElement = document.createElement("label");
+    linkElement.innerText = src;
 
     let destElement = document.createElement("input");
     destElement.value = dst;
@@ -195,13 +213,13 @@ async function addNew() {
 
 async function updateExisting(element) {
     let children = element.parentElement.childNodes;
-    let src = children.item(0).value;
+    let src = children.item(0).innerText;
     let dst = children.item(1).value;
     let response = await fetch(
-            apiLocation + "/simpleshortener/api/edit",
+            apiLocation + "/simpleshortener/api/edit/" + src,
             {
                 headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
-                body: JSON.stringify({"link": src, "destination": dst}),
+                body: JSON.stringify({"destination": dst}),
                 method: "PATCH",
             }
             );
@@ -215,12 +233,11 @@ async function updateExisting(element) {
 
 async function deleteExisting(element) {
     let parent = element.parentElement;
-    let src = parent.childNodes.item(0).value;
+    let src = parent.childNodes.item(0).innerText;
     let response = await fetch(
-            apiLocation + "/simpleshortener/api/delete",
+            apiLocation + "/simpleshortener/api/delete/" + src,
             {
                 headers: {"Username": username, "Password": password, "Content-Type": "application/json"},
-                body: JSON.stringify({"link": src}),
                 method: "DELETE",
             }
     );

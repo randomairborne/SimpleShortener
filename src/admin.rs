@@ -1,4 +1,5 @@
-use crate::structs::{Add, Authorization, Delete, Edit, List, WebServerError};
+use crate::structs::{Add, Authorization, Edit, List, WebServerError};
+use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::Json;
 use std::ops::Not;
@@ -14,7 +15,8 @@ pub async fn list(_: crate::structs::Authorization) -> Result<Json<List>, WebSer
 
 pub async fn edit(
     _: Authorization,
-    Json(Edit { link, destination }): Json<Edit>,
+    Path(link): Path<String>,
+    Json(Edit { destination }): Json<Edit>,
 ) -> Result<&'static str, WebServerError> {
     let links = crate::URLS.get().ok_or(WebServerError::UrlsNotFound)?;
     let _: () = links
@@ -50,7 +52,7 @@ pub async fn edit(
 
 pub async fn delete(
     _: Authorization,
-    Json(Delete { link }): Json<Delete>,
+    Path(link): Path<String>,
 ) -> Result<&'static str, WebServerError> {
     let links = crate::URLS.get().ok_or(WebServerError::UrlsNotFound)?;
     let _: () = links
@@ -87,7 +89,7 @@ pub async fn add(
         .contains(&link)
         .not()
         .then(|| ())
-        .ok_or(WebServerError::NotFoundJson)?;
+        .ok_or(WebServerError::UrlDisallowed)?;
 
     let db = crate::DB.get().ok_or(WebServerError::DbNotFound)?;
 

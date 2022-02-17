@@ -21,13 +21,7 @@ pub struct Add {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Edit {
-    pub link: String,
     pub destination: String,
-}
-
-#[derive(Deserialize, Clone, Debug)]
-pub struct Delete {
-    pub link: String,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -42,6 +36,7 @@ pub enum WebServerError {
     NotFound,
     NotFoundJson,
     UrlConflict,
+    UrlDisallowed,
 
     DbError(sqlx::Error),
     InvalidUri(axum::http::uri::InvalidUri),
@@ -91,10 +86,11 @@ impl axum::response::IntoResponse for WebServerError {
                 "application/json",
             ),
             WebServerError::UrlConflict => (
-                r#"{"error":"Short URL conflicts with system URL, already-existing url, or is empty"}"#.into(),
+                r#"{"error":"Short URL conflicts with already-existing url, try editing instead"}"#
+                    .into(),
                 StatusCode::CONFLICT,
                 "application/json",
-                ),
+            ),
             WebServerError::DbError(e) => (
                 format!(r#"{{"error":"Database returned an error: {:?}"}}"#, e).into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -130,12 +126,17 @@ impl axum::response::IntoResponse for WebServerError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
-WebServerError::InvalidRedirectUri => (
+            WebServerError::InvalidRedirectUri => (
                 r#"{"error":"database returned invalid header"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
 
+            WebServerError::UrlDisallowed => (
+                r#"{"error":"URL empty or used by the system"}"#.into(),
+                StatusCode::CONFLICT,
+                "application/json",
+            ),
         };
 
         axum::response::Response::builder()
