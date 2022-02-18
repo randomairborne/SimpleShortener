@@ -30,4 +30,4 @@ then run with `./target/bin/simple_shortener /path/to/config.toml`
 
 If you have any issues you can contact me on discord, `valkyrie_pilot#2707`
 
-You can edit links at /simpleshortener_admin_panel/
+You can edit links at /simpleshortener/
