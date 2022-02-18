@@ -1,5 +1,4 @@
 /target
 .env
 .idea
-simple_shortener
-*.deb
+simpleshortener
