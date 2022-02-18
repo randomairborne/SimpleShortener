@@ -9,10 +9,10 @@ pub async fn redirect(
         .ok_or(WebServerError::UrlsNotFound)?
         .get(&path)
         .ok_or(WebServerError::NotFound)?;
-    let destination_url = destination_url_ref.as_str();
+    let destination_url = destination_url_ref.as_str().to_lowercase();
     tracing::trace!("Path: {}, Destination: {}", path, destination_url);
     let mut headers = axum::http::HeaderMap::new();
-    let destination = match axum::http::HeaderValue::from_str(destination_url) {
+    let destination = match axum::http::HeaderValue::from_str(destination_url.as_str()) {
         Ok(dest) => dest,
         Err(_) => return Err(WebServerError::InvalidRedirectUri),
     };

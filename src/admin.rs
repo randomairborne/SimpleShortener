@@ -76,8 +76,9 @@ pub async fn delete(
 
 pub async fn add(
     _: Authorization,
-    Json(Add { link, destination }): Json<Add>,
+    Json(Add { mut link, destination }): Json<Add>,
 ) -> Result<(StatusCode, &'static str), WebServerError> {
+    link = link.to_lowercase();
     let links = crate::URLS.get().ok_or(WebServerError::UrlsNotFound)?;
     let _: () = (!links.contains_key(&link))
         .then(|| ())
