@@ -13,7 +13,7 @@ FROM debian:bullseye-slim
 
 WORKDIR /
 
-COPY --from=build /simpleshortene/target/release/simpleshortener .
+COPY --from=build /simpleshortener/target/release/simpleshortener .
 
 RUN adduser --home /nonexistent --no-create-home --disabled-password simpleshortener
 USER simpleshortener
