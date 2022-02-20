@@ -26,7 +26,7 @@ Build with [rust](https://rust-lang.org)
 git clone https://github.com/randomairborne/SimpleShortener.git
 SQLX_OFFLINE="true" cargo build --release
 ```
-then run with `./target/bin/simple_shortener /path/to/config.toml`
+then run with `./target/bin/simpleshortene /path/to/config.toml`
 
 If you have any issues you can contact me on discord, `valkyrie_pilot#2707`
 

@@ -7,7 +7,7 @@ RUN apt-get update && apt-get -y install gcc-arm-linux-gnueabihf binutils-arm-li
 
 RUN rustup target add armv7-unknown-linux-gnueabihf
 
-WORKDIR /simple_shortener
+WORKDIR /simpleshortene
 
 COPY . .
 
@@ -20,9 +20,9 @@ FROM debian:bullseye-slim
 
 WORKDIR /
 
-COPY --from=build /simple_shortener/target/armv7-unknown-linux-gnueabihf/release/simple_shortener .
+COPY --from=build /simpleshortene/target/armv7-unknown-linux-gnueabihf/release/simpleshortener .
 
-RUN adduser --home /nonexistent --no-create-home --disabled-password simple_shortener
-USER simple_shortener
+RUN adduser --home /nonexistent --no-create-home --disabled-password simpleshortener
+USER simpleshortener
 
-CMD ["./simple_shortener"]
+CMD ["./simpleshortener"]
