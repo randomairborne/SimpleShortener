@@ -4,5 +4,5 @@ port = 24529
 root = "https://github.com/randomairborne/simpleshortener"
 # Postgres database URL.
 database = "postgres://simpleshortener:simpleshortener@localhost/simpleshortener"
-# A key:value list of username:sha256-hahed passwords <default admin/admin>
+# A key:value list of username:sha256-hashed passwords <default admin/admin>
 users = { admin = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"}
