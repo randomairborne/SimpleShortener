@@ -7,10 +7,13 @@ use axum::{routing::delete, routing::get, routing::patch, routing::put, Router};
 use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
 
-// OnceCell init
+/// Configuration oncecell, holds the Config struct and can easily be pulled from
 static CONFIG: OnceCell<structs::Config> = OnceCell::new();
+/// URL dashmap. This can be mutated, be careful not to do so
 static URLS: OnceCell<dashmap::DashMap<String, String>> = OnceCell::new();
+/// database connection.
 static DB: OnceCell<sqlx::Pool<sqlx::Postgres>> = OnceCell::new();
+/// shortenings that are not allowed
 static DISALLOWED_SHORTENINGS: OnceCell<std::collections::HashSet<String>> = OnceCell::new();
 
 #[tokio::main]
@@ -118,5 +121,5 @@ async fn main() {
                 .expect("failed to listen for ctrl+c");
         })
         .await
-        .unwrap();
+        .expect("Failed to bind to address, is something else using the port?");
 }

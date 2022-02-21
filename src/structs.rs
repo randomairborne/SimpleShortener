@@ -26,7 +26,7 @@ pub struct Edit {
 
 #[derive(Serialize, Clone, Debug)]
 pub struct List {
-    pub links: dashmap::DashMap<String, String>,
+    pub links: &'static dashmap::DashMap<String, String>,
 }
 
 #[derive(Debug)]

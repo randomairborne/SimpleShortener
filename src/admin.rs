@@ -6,10 +6,7 @@ use std::ops::Not;
 
 pub async fn list(_: crate::structs::Authorization) -> Result<Json<List>, WebServerError> {
     Ok(Json(List {
-        links: crate::URLS
-            .get()
-            .ok_or(WebServerError::UrlsNotFound)?
-            .clone(),
+        links: crate::URLS.get().ok_or(WebServerError::UrlsNotFound)?,
     }))
 }
 
@@ -19,12 +16,12 @@ pub async fn edit(
     Json(Edit { destination }): Json<Edit>,
 ) -> Result<&'static str, WebServerError> {
     let links = crate::URLS.get().ok_or(WebServerError::UrlsNotFound)?;
-    let _: () = links
+    links
         .contains_key(&link)
         .then(|| ())
         .ok_or(WebServerError::NotFoundJson)?;
 
-    let _: () = crate::DISALLOWED_SHORTENINGS
+    crate::DISALLOWED_SHORTENINGS
         .get()
         .ok_or(WebServerError::DisallowedNotFound)?
         .contains(&link)
@@ -55,7 +52,7 @@ pub async fn delete(
     Path(link): Path<String>,
 ) -> Result<&'static str, WebServerError> {
     let links = crate::URLS.get().ok_or(WebServerError::UrlsNotFound)?;
-    let _: () = links
+    links
         .contains_key(&link)
         .then(|| ())
         .ok_or(WebServerError::NotFoundJson)?;
@@ -76,15 +73,18 @@ pub async fn delete(
 
 pub async fn add(
     _: Authorization,
-    Json(Add { mut link, destination }): Json<Add>,
+    Json(Add {
+        mut link,
+        destination,
+    }): Json<Add>,
 ) -> Result<(StatusCode, &'static str), WebServerError> {
     link = link.to_lowercase();
     let links = crate::URLS.get().ok_or(WebServerError::UrlsNotFound)?;
-    let _: () = (!links.contains_key(&link))
+    (!links.contains_key(&link))
         .then(|| ())
         .ok_or(WebServerError::UrlConflict)?;
 
-    let _: () = crate::DISALLOWED_SHORTENINGS
+    crate::DISALLOWED_SHORTENINGS
         .get()
         .ok_or(WebServerError::DisallowedNotFound)?
         .contains(&link)
