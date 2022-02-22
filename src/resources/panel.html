@@ -53,6 +53,10 @@
                 text-decoration: none;
                 display: inline-block;
             }
+
+	    #links-table {
+                margin: 0 auto;
+            }
         </style>
     </head>
     <h1>SimpleShortener Panel</h1>
@@ -85,6 +89,7 @@
                     </td>
                     <td>
                         <input
+                            type="url"
                             placeholder="Destination"
                             id="new-link-dst"
                             size="50"
@@ -178,6 +183,7 @@
                 linkElement.innerText = link;
 
                 let destElement = document.createElement("input");
+                destElement.type = "url"
                 destElement.value = linkArray[link];
                 destElement.placeholder = "Destination";
                 destElement.setAttribute("size", "50");
@@ -190,7 +196,7 @@
                 deleteButton.innerHTML = "Delete";
                 deleteButton.setAttribute("onclick", "deleteExisting(this)");
 
-                let newRowElement = linksTableElement.insertRow(idx);
+                let newRowElement = linksTableElement.insertRow(idx+1);
                 let linkCellElement = newRowElement.insertCell();
                 linkCellElement.appendChild(linkElement);
 
@@ -245,6 +251,7 @@
             linkElement.innerText = src;
 
             let destElement = document.createElement("input");
+            destElement.type = "url"
             destElement.value = dst;
             destElement.placeholder = "Destination";
             destElement.setAttribute("size", "50");
@@ -257,7 +264,7 @@
             deleteButton.innerHTML = "Delete";
             deleteButton.setAttribute("onclick", "deleteExisting(this)");
 
-            let newRowElement = linksTableElement.insertRow(idx);
+            let newRowElement = linksTableElement.insertRow(totalUrls+1);
             let linkCellElement = newRowElement.insertCell();
             linkCellElement.appendChild(linkElement);
 
@@ -272,9 +279,9 @@
         }
 
         async function updateExisting(element) {
-            let children = element.parentElement.childNodes;
-            let src = children.item(0).innerText;
-            let dst = children.item(1).value;
+            let cells = element.parentElement.parentElement.children;
+            let src = cells[0].innerText;
+            let dst = cells[1].firstElementChild.value;
             let response = await fetch(
                 apiLocation + "/simpleshortener/api/edit/" + src,
                 {
@@ -301,8 +308,9 @@
         }
 
         async function deleteExisting(element) {
-            let parent = element.parentElement;
-            let src = parent.childNodes.item(0).innerText;
+            let linksTable = document.getElementById("links-table");
+            let row = element.parentElement.parentElement;
+            let src = row.children[0].innerText;
             let response = await fetch(
                 apiLocation + "/simpleshortener/api/delete/" + src,
                 {
@@ -323,7 +331,8 @@
                         (data["error"] ? data["error"] : "unknown")
                 );
             } else {
-                parent.parentElement.removeChild(parent);
+                linksTable.deleteRow(row.rowIndex);
+		totalUrls--;
             }
         }
     </script>
