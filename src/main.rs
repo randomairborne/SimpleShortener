@@ -65,11 +65,7 @@ async fn main() {
         .max_connections(2)
         .connect(database_uri.as_str())
         .await
-        .unwrap_or_else(|err| {
-            eprintln!("Failed to connect to database: {:#?}", err);
-            std::process::exit(3);
-        });
-
+        .expect(format!("Failed to connect to database: {:#?}", err));
     sqlx::migrate!()
         .run(&pool)
         .await
