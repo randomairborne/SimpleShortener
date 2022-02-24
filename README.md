@@ -1,5 +1,12 @@
 # Simple URL shortener
 
+A very simple URL shortener, which is easy to configure and quite speedy.
+Later it is planned to add some analytics.
+
+If you have any issues you can contact me on discord, `valkyrie_pilot#2707`
+
+You can edit links at /simpleshortener/
+
 ## Docker install
 ```bash
 mkdir -p /opt/simpleshortener/
@@ -21,13 +28,12 @@ database = "postgres://username:password@localhost/database"
 # A key:value list of username:sha256-hashed passwords
 users = { admin = "fc8252c8dc55839967c58b9ad755a59b61b67c13227ddae4bd3f78a38bf394f7" }
 ```
-Build with [rust](https://rust-lang.org)
+
+## Building
+You can build from source with [rust](https://rust-lang.org)
 ```bash
 git clone https://github.com/randomairborne/SimpleShortener.git
 SQLX_OFFLINE="true" cargo build --release
 ```
 then run with `./target/bin/simpleshortener /path/to/config.toml`
 
-If you have any issues you can contact me on discord, `valkyrie_pilot#2707`
-
-You can edit links at /simpleshortener/
