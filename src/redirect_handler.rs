@@ -2,15 +2,15 @@ use crate::structs::WebServerError;
 use axum::extract::Path;
 
 pub async fn redirect(
-    Path(path): Path<String>,
+    Path(mut path): Path<String>,
 ) -> Result<(axum::http::StatusCode, axum::http::HeaderMap), WebServerError> {
-    let destination_url_ref = crate::URLS
+    path = path.to_lowercase();
+    let destination_url = crate::URLS
         .get()
         .ok_or(WebServerError::UrlsNotFound)?
         .get(&path)
         .ok_or(WebServerError::NotFound)?;
-    let destination_url = destination_url_ref.as_str().to_lowercase();
-    tracing::trace!("Path: {}, Destination: {}", path, destination_url);
+    tracing::trace!("Path: {}, Destination: {}", path, destination_url.as_str());
     let mut headers = axum::http::HeaderMap::new();
     let destination = match axum::http::HeaderValue::from_str(destination_url.as_str()) {
         Ok(dest) => dest,

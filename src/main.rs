@@ -45,7 +45,6 @@ async fn main() {
         std::process::exit(2);
     });
     // This looks scary, but it simply looks through the config for the user's hashed passwords and lowercases them.
-    // TODO do this for the URL keys as well
     config
         .users
         // get mutable iterator over items
@@ -54,6 +53,7 @@ async fn main() {
         .map(|(_, x)| *x = x.to_lowercase())
         // consume the iterator by dropping each item in it
         .for_each(drop);
+
     CONFIG
         .set(config.clone())
         .expect("Failed to write to config OnceCell");
@@ -80,7 +80,7 @@ async fn main() {
         .expect("Failed to select links from database");
     let urls = dashmap::DashMap::with_capacity(urls_vec.len());
     for url in urls_vec {
-        urls.insert(url.link, url.destination);
+        urls.insert(url.link.to_lowercase(), url.destination);
     }
     URLS.set(urls).expect("Failed to set URLS OnceCell");
     DB.set(pool).expect("Failed to set database OnceCell");
