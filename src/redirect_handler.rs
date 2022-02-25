@@ -10,7 +10,7 @@ pub async fn redirect(
         .ok_or(WebServerError::UrlsNotFound)?
         .get(&path)
         .ok_or(WebServerError::NotFound)?;
-    tracing::trace!("Path: {}, Destination: {}", path, destination_url.as_str());
+    tracing::debug!("Path: {}, Destination: {}", path, destination_url.as_str());
     let mut headers = axum::http::HeaderMap::new();
     let destination = match axum::http::HeaderValue::from_str(destination_url.as_str()) {
         Ok(dest) => dest,
@@ -25,7 +25,7 @@ pub async fn root() -> Result<
     (axum::http::StatusCode, axum::http::HeaderMap, &'static str),
     crate::structs::WebServerError,
 > {
-    tracing::trace!("Handling root request");
+    tracing::debug!("Handling root request");
     let config = match crate::CONFIG.get() {
         None => return Err(crate::structs::WebServerError::ConfigNotFound),
         Some(config) => config,

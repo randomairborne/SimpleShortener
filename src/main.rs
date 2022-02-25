@@ -109,6 +109,7 @@ async fn main() {
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
     tracing::log::info!("listening on {}", addr);
+    println!("Server running on http://127.0.0.1:{}", port);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .with_graceful_shutdown(async {

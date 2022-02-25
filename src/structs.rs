@@ -182,7 +182,7 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
             .map(|x| format!("{:02x}", x))
             .collect::<String>();
         let existing_hash = config.users.get(&username).map(String::as_str);
-        tracing::trace!(
+        tracing::debug!(
             "Attempting to log in user {}, supplied password hash is {}, correct password hash is {}",
             username,
             result,
