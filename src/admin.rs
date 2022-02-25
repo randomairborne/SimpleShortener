@@ -21,14 +21,6 @@ pub async fn edit(
         .then(|| ())
         .ok_or(WebServerError::NotFoundJson)?;
 
-    crate::DISALLOWED_SHORTENINGS
-        .get()
-        .ok_or(WebServerError::DisallowedNotFound)?
-        .contains(&link)
-        .not()
-        .then(|| ())
-        .ok_or(WebServerError::UrlConflict)?;
-
     let db = crate::DB.get().ok_or(WebServerError::DbNotFound)?;
     assert_eq!(
         sqlx::query!(
