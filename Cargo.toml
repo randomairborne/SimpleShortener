@@ -19,9 +19,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 toml = "0.5"
 sha2 = "0.10"
-dashmap = { version = "5.0.0", features = ["serde"] }
-async-trait = "0.1.52"
-woothee = "0.13"
+dashmap = { version = "5.0", features = ["serde"] }
+async-trait = "0.1"
 
 [profile.release]
 codegen-units = 1
