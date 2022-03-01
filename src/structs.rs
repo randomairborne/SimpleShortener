@@ -6,11 +6,18 @@ use sha2::Digest;
 use std::borrow::Cow;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct TlsConfig {
+    pub certfile: Option<String>,
+    pub keyfile: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
     pub port: Option<u16>,
     pub root: Option<String>,
     pub database: Option<String>,
     pub users: std::collections::HashMap<String, String>,
+    pub tls: Option<TlsConfig>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
