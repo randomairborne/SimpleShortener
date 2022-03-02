@@ -2,61 +2,98 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>SimpleShortener panel</title>
+    <meta name="viewport" content="width=device-width" />
+    <title>SimpleShortener Panel</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap"
+      rel="preload"
+      as="style"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap"
+      rel="stylesheet"
+    />
     <style>
-             body {
-                 text-align: center;
-                 background: #44484a;
-                 color: #43baf4;
-                 font-family: "JetBrains Mono", monospace;
-             }
+      body {
+        text-align: center;
+        background: hsl(200, 4%, 10%);
+        color: #43baf4;
+        font-family: "JetBrains Mono", monospace;
+      }
 
-             input {
-                 background: #676b6c;
-                 border: #1b8b77;
-                 color: #ffffff;
-             }
+      input {
+        background: hsl(192, 2%, 40%);
+        border: #1b8b77;
+        color: #ffffff;
+        padding: 15px;
+        border-radius: 2px;
+      }
 
-             @font-face {
-                 font-family: 'JetBrains Mono';
-                 src: url('/simpleshortener/static/font.woff2') format('woff2');
-                 url('/simpleshortener/static/font.woff') format('woff');
-                 font-weight: 400;
-                 font-style: normal;
-                 font-display: swap;
-             }
+      input::placeholder {
+        color: hsl(192, 2%, 70%);
+      }
 
-             a {
-                 color: #43baf4;
-             }
+      a {
+        color: #43baf4;
+      }
 
-             label {}
+      button {
+        border: none;
+        border-radius: 5px;
+        padding: 15px;
+        color: white;
+        cursor: pointer;
+        display: inline-block;
+      }
 
-             #login-button {
-                 background-color: #4caf59;
-                 /* Green */
-                 border: none;
-                 color: white;
-                 padding: 3px 5px;
-                 text-align: center;
-                 text-decoration: none;
-                 display: inline-block;
-             }
+      #login-button,
+      #add-button,
+      .update-button {
+        background-color: #4caf59;
+        /* Green */
+        text-align: center;
+        text-decoration: none;
+      }
 
-             #logout-button {
-                 background-color: #af4c4c;
-                 /* Red */
-                 border: none;
-                 color: white;
-                 padding: 3px 5px;
-                 text-align: center;
-                 text-decoration: none;
-                 display: inline-block;
-             }
+      #logout-button,
+      .delete-button {
+        background-color: #af4c4c;
+        /* Red */
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+      }
 
-             #links-table {
-                 margin: 0 auto;
-             }
+      .delete-button {
+        margin-left: 0.5em;
+      }
+
+      #links-table {
+        margin: 0 auto;
+        border-collapse: separate;
+        overflow: auto;
+      }
+
+      th,
+      td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid hsl(200, 4%, 50%);
+      }
+
+      tr {
+        transition: 0.3s;
+        border-radius: 5px;
+      }
+
+      tr:last-child > td {
+        border-bottom: none;
+      }
+
+      tr + tr:hover {
+        background-color: hsl(200, 4%, 25%);
+      }
     </style>
   </head>
   <h1>SimpleShortener Panel</h1>
@@ -66,35 +103,42 @@
     <div id="login">
       <input id="username-input" placeholder="Username" />
       <br />
-      <input id="password-input" type="password" placeholder="Password" />
+      <input
+        id="password-input"
+        type="password"
+        placeholder="Password"
+        style="margin-top: 0.25em"
+      />
       <br />
       <br />
       <button onclick="login()" id="login-button">Login</button>
-      <div id="login_status"></div>
+      <div id="login-status"></div>
     </div>
     <div id="panel" style="display: none">
-      <table id="links-table">
-        <tr>
-          <th>Shortlink</th>
-          <th>Destination</th>
-          <th>Actions</th>
-        </tr>
-        <tr>
-          <td>
-            <input placeholder="Shortlink" id="new-link-src" size="12" />
-          </td>
-          <td>
-            <input
-              type="url"
-              placeholder="Destination"
-              id="new-link-dst"
-              size="50"
-            />
-          </td>
-          <td><button onclick="addNew()">Add</button></td>
-        </tr>
-      </table>
-
+      <div id="links-table-wrapper">
+        <table id="links-table" cellspacing="0">
+          <tr>
+            <th>Shortlink</th>
+            <th>Destination</th>
+            <th>Actions</th>
+          </tr>
+          <tr>
+            <td>
+              <input placeholder="Shortlink" id="new-link-src" size="12" />
+            </td>
+            <td>
+              <input
+                type="url"
+                placeholder="Destination"
+                id="new-link-dst"
+                size="50"
+              />
+            </td>
+            <td><button id="add-button" onclick="addNew()">Add</button></td>
+          </tr>
+        </table>
+      </div>
+      <br />
       <button onclick="logout()" id="logout-button">Log Out</button>
     </div>
     <br />
@@ -127,7 +171,7 @@
     }
 
     async function login() {
-      const statusElement = document.getElementById("login_status");
+      const statusElement = document.getElementById("login-status");
       const loginElement = document.getElementById("login");
       const panelElement = document.getElementById("panel");
       const usernameField = document.getElementById("username-input");
@@ -180,12 +224,16 @@
         let submitButton = document.createElement("button");
         submitButton.innerHTML = "Update";
         submitButton.setAttribute("onclick", "updateExisting(this)");
+        submitButton.setAttribute("class", "update-button");
 
         let deleteButton = document.createElement("button");
         deleteButton.innerHTML = "Delete";
         deleteButton.setAttribute("onclick", "deleteExisting(this)");
+        deleteButton.setAttribute("class", "delete-button");
 
         let newRowElement = linksTableElement.insertRow(idx + 1);
+        newRowElement.setAttribute("class", "link-row");
+
         let linkCellElement = newRowElement.insertCell();
         linkCellElement.appendChild(linkElement);
 
@@ -245,12 +293,16 @@
       let submitButton = document.createElement("button");
       submitButton.innerHTML = "Update";
       submitButton.setAttribute("onclick", "updateExisting(this)");
+      submitButton.setAttribute("class", "update-button");
 
       let deleteButton = document.createElement("button");
       deleteButton.innerHTML = "Delete";
       deleteButton.setAttribute("onclick", "deleteExisting(this)");
+      deleteButton, setAttribute("class", "delete-button");
 
       let newRowElement = linksTableElement.insertRow(totalUrls + 1);
+      newRowElement.setAttribute("class", "link-row");
+
       let linkCellElement = newRowElement.insertCell();
       linkCellElement.appendChild(linkElement);
 
