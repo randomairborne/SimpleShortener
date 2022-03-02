@@ -7,10 +7,13 @@ use axum::{routing::delete, routing::get, routing::patch, routing::put, Router};
 use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
 
-// OnceCell init
+/// Configuration oncecell, holds the Config struct and can easily be pulled from
 static CONFIG: OnceCell<structs::Config> = OnceCell::new();
+/// URL dashmap. This can be mutated, be careful not to do so
 static URLS: OnceCell<dashmap::DashMap<String, String>> = OnceCell::new();
+/// database connection.
 static DB: OnceCell<sqlx::Pool<sqlx::Postgres>> = OnceCell::new();
+/// shortenings that are not allowed
 static DISALLOWED_SHORTENINGS: OnceCell<std::collections::HashSet<String>> = OnceCell::new();
 
 #[tokio::main]
@@ -42,7 +45,6 @@ async fn main() {
         std::process::exit(2);
     });
     // This looks scary, but it simply looks through the config for the user's hashed passwords and lowercases them.
-    // TODO do this for the URL keys as well
     config
         .users
         // get mutable iterator over items
@@ -51,6 +53,7 @@ async fn main() {
         .map(|(_, x)| *x = x.to_lowercase())
         // consume the iterator by dropping each item in it
         .for_each(drop);
+
     CONFIG
         .set(config.clone())
         .expect("Failed to write to config OnceCell");
@@ -62,11 +65,7 @@ async fn main() {
         .max_connections(2)
         .connect(database_uri.as_str())
         .await
-        .unwrap_or_else(|err| {
-            eprintln!("Failed to connect to database: {:#?}", err);
-            std::process::exit(3);
-        });
-
+        .expect("Failed to connect to database");
     sqlx::migrate!()
         .run(&pool)
         .await
@@ -77,7 +76,7 @@ async fn main() {
         .expect("Failed to select links from database");
     let urls = dashmap::DashMap::with_capacity(urls_vec.len());
     for url in urls_vec {
-        urls.insert(url.link, url.destination);
+        urls.insert(url.link.to_lowercase(), url.destination);
     }
     URLS.set(urls).expect("Failed to set URLS OnceCell");
     DB.set(pool).expect("Failed to set database OnceCell");
@@ -110,6 +109,7 @@ async fn main() {
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::log::info!("listening on {}", addr);
+    println!("Server running on http://127.0.0.1:{}", port);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .with_graceful_shutdown(async {
@@ -118,5 +118,5 @@ async fn main() {
                 .expect("failed to listen for ctrl+c");
         })
         .await
-        .unwrap();
+        .expect("Failed to bind to address, is something else using the port?");
 }

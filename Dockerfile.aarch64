@@ -1,6 +1,6 @@
 FROM rust:1-slim-bullseye as build
 
-WORKDIR /simple_shortener
+WORKDIR /simpleshortener
 
 COPY . .
 
@@ -13,9 +13,9 @@ FROM debian:bullseye-slim
 
 WORKDIR /
 
-COPY --from=build /simple_shortener/target/release/simple_shortener .
+COPY --from=build /simpleshortener/target/release/simpleshortener .
 
-RUN adduser --home /nonexistent --no-create-home --disabled-password simple_shortener
-USER simple_shortener
+RUN adduser --home /nonexistent --no-create-home --disabled-password simpleshortener
+USER simpleshortener
 
-CMD ["./simple_shortener"]
+CMD ["./simpleshortener"]
