@@ -12,7 +12,11 @@ WORKDIR /simpleshortener
 
 RUN cargo build --release
 
-COPY src migrations sqlx-data.json /simpleshortener/
+COPY sqlx-data.json sqlx-data.json
+
+COPY migrations migrations
+
+COPY src src
 
 RUN touch src/main.rs && cargo build --release
 
