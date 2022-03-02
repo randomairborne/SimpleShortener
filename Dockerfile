@@ -1,21 +1,28 @@
 FROM rust:1-slim-bullseye as build
 
-WORKDIR /simple_shortener
-
-COPY . .
+WORKDIR /
 
 ENV RUSTFLAGS="--emit=asm"
 
+RUN USER=0 cargo new simpleshortener
+
+COPY Cargo.toml Cargo.lock /simpleshortener/
+
+WORKDIR /simpleshortener
+
 RUN cargo build --release
+
+COPY src migrations sqlx-data.json /simpleshortener/
+
+RUN touch src/main.rs && cargo build --release
 
 # our final base
 FROM debian:bullseye-slim
 
 WORKDIR /
 
-COPY --from=build /simple_shortener/target/release/simple_shortener .
+COPY --from=build /simpleshortener/target/release/simpleshortener .
 
-RUN adduser --home /nonexistent --no-create-home --disabled-password simple_shortener
-USER simple_shortener
+USER 9999
 
-CMD ["./simple_shortener"]
+CMD ["./simpleshortener"]
