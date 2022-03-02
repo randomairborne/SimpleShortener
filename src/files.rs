@@ -5,7 +5,7 @@ pub async fn doc() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static s
         axum::http::header::CONTENT_TYPE,
         axum::http::HeaderValue::from_static("text/html"),
     );
-    tracing::trace!("Handling doc request");
+    tracing::debug!("Handling doc request");
     (
         axum::http::StatusCode::OK,
         headers,
@@ -20,7 +20,7 @@ pub async fn panelhtml() -> (axum::http::StatusCode, axum::http::HeaderMap, &'st
         axum::http::header::CONTENT_TYPE,
         axum::http::HeaderValue::from_static("text/html"),
     );
-    tracing::trace!("Handling html request");
+    tracing::debug!("Handling html request");
     (
         axum::http::StatusCode::OK,
         headers,
@@ -35,7 +35,7 @@ pub async fn font2() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static
         axum::http::header::CONTENT_TYPE,
         axum::http::HeaderValue::from_static("font/woff2"),
     );
-    tracing::trace!("Handling woff2 font request");
+    tracing::debug!("Handling woff2 font request");
     (
         axum::http::StatusCode::OK,
         headers,
@@ -50,7 +50,7 @@ pub async fn font() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static 
         axum::http::header::CONTENT_TYPE,
         axum::http::HeaderValue::from_static("font/woff"),
     );
-    tracing::trace!("Handling woff font request");
+    tracing::debug!("Handling woff font request");
     (
         axum::http::StatusCode::OK,
         headers,
@@ -65,7 +65,7 @@ pub async fn favicon() -> (axum::http::StatusCode, axum::http::HeaderMap, &'stat
         axum::http::header::CONTENT_TYPE,
         axum::http::HeaderValue::from_static("image/ico"),
     );
-    tracing::trace!("Handling favicon request");
+    tracing::debug!("Handling favicon request");
     (
         axum::http::StatusCode::OK,
         headers,
@@ -80,7 +80,7 @@ pub async fn logo() -> (axum::http::StatusCode, axum::http::HeaderMap, &'static 
         axum::http::header::CONTENT_TYPE,
         axum::http::HeaderValue::from_static("image/png"),
     );
-    tracing::trace!("Handling logo request");
+    tracing::debug!("Handling logo request");
     (
         axum::http::StatusCode::OK,
         headers,
