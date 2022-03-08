@@ -124,7 +124,7 @@ async fn main() {
         };
         let server_tls = tokio::spawn(async move {
             axum_server::bind_rustls(
-                SocketAddr::from(([127, 0, 0, 1], tls_port)),
+                SocketAddr::from(([0, 0, 0, 0], tls_port)),
                 axum_server::tls_rustls::RustlsConfig::from_pem(cert, key)
                     .await
                     .expect("Bad TLS pemfiles"),
