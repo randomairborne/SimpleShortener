@@ -108,7 +108,7 @@ async fn main() {
         }
     };
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::log::info!("listening on {}", addr);
     if config.tls.is_some() {
         let key = utils::read_file_to_bytes(&config.clone().tls.unwrap().keyfile);
