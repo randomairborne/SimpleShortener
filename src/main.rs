@@ -2,6 +2,7 @@ mod admin;
 mod files;
 mod redirect_handler;
 mod structs;
+mod utils;
 
 use axum::{routing::delete, routing::get, routing::patch, routing::put, Router};
 use once_cell::sync::OnceCell;
@@ -60,7 +61,7 @@ async fn main() {
 
     // Checks for a PORT environment variable
     let database_uri = std::env::var("DATABASE_URI")
-        .unwrap_or_else(|_| config.database.expect("Database URI not set!"));
+        .unwrap_or_else(|_| config.clone().database.expect("Database URI not set!"));
     let pool = sqlx::postgres::PgPoolOptions::new()
         .max_connections(2)
         .connect(database_uri.as_str())
@@ -100,7 +101,7 @@ async fn main() {
     // Checks for a PORT environment variable
     let port = match std::env::var("PORT").map(|x| x.parse::<u16>()) {
         Ok(Ok(port)) => port,
-        Err(_) => config.port.expect("Database URI not set!"),
+        Err(_) => config.port.expect("Port not set!"),
         Ok(Err(e)) => {
             eprintln!("port environment variable invalid: {:#?}", e);
             std::process::exit(3);
@@ -109,14 +110,41 @@ async fn main() {
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
     tracing::log::info!("listening on {}", addr);
-    println!("Server running on http://127.0.0.1:{}", port);
-    axum_server::bind(&addr)
-        .serve(app.into_make_service())
-        .with_graceful_shutdown(async {
-            tokio::signal::ctrl_c()
-                .await
-                .expect("failed to listen for ctrl+c");
-        })
-        .await
-        .expect("Failed to bind to address, is something else using the port?");
+    if config.tls.is_some() {
+        let key = utils::read_file_to_bytes(&config.clone().tls.unwrap().keyfile);
+        let cert = utils::read_file_to_bytes(&config.clone().tls.unwrap().certfile);
+        let tls_app = app.clone();
+        let tls_port = match std::env::var("TLS_PORT").map(|x| x.parse::<u16>()) {
+            Ok(Ok(port)) => port,
+            Err(_) => config.clone().tls.unwrap().port,
+            Ok(Err(e)) => {
+                eprintln!("port environment variable invalid: {:#?}", e);
+                std::process::exit(4);
+            }
+        };
+        let server_tls = tokio::spawn(async move {
+            axum_server::bind_rustls(
+                SocketAddr::from(([127, 0, 0, 1], tls_port)),
+                axum_server::tls_rustls::RustlsConfig::from_pem(cert, key)
+                    .await
+                    .expect("Bad TLS pemfiles"),
+            )
+            .serve(tls_app.into_make_service())
+            .await
+            .expect("Failed to bind to address, is something else using the port?");
+        });
+        server_tls.await.expect("Failed to await HTTPS process");
+    }
+    let server_http = tokio::spawn(async move {
+        axum::Server::bind(&addr)
+            .serve(app.into_make_service())
+            .with_graceful_shutdown(async {
+                tokio::signal::ctrl_c()
+                    .await
+                    .expect("failed to listen for ctrl+c");
+            })
+            .await
+            .expect("Failed to bind to address, is something else using the port?");
+    });
+    server_http.await.expect("Failed to await main HTTP process");
 }
