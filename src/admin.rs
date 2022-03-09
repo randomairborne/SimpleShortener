@@ -21,19 +21,6 @@ pub async fn edit(
         .then(|| ())
         .ok_or(WebServerError::NotFoundJson)?;
 
-    let db = crate::DB.get().ok_or(WebServerError::DbNotFound)?;
-    assert_eq!(
-        sqlx::query!(
-            "UPDATE links SET destination = $1 WHERE link = $2",
-            destination,
-            link
-        )
-        .execute(db)
-        .await?
-        .rows_affected(),
-        1,
-        "already checked there would be at least one row in the database but that row does not exist?"
-    );
     links.insert(link, destination);
 
     Ok(r#"{"message":"Link edited!"}\n"#)
@@ -49,15 +36,6 @@ pub async fn delete(
         .then(|| ())
         .ok_or(WebServerError::NotFoundJson)?;
 
-    let db = crate::DB.get().ok_or(WebServerError::DbNotFound)?;
-    assert_eq!(
-        sqlx::query!("DELETE FROM links WHERE link = $1", link)
-            .execute(db)
-            .await?
-            .rows_affected(),
-        1,
-        "already checked there would be at least one row in the database but that row does not exist?"
-    );
     links.remove(&link);
 
     Ok(r#"{"message":"Link removed!"}"#)
@@ -83,12 +61,6 @@ pub async fn add(
         .not()
         .then(|| ())
         .ok_or(WebServerError::UrlDisallowed)?;
-
-    let db = crate::DB.get().ok_or(WebServerError::DbNotFound)?;
-
-    sqlx::query!("INSERT INTO links VALUES ($1, $2)", link, destination)
-        .execute(db)
-        .await?;
 
     links.insert(link, destination);
 

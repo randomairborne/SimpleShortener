@@ -12,8 +12,6 @@ use std::net::SocketAddr;
 static CONFIG: OnceCell<structs::Config> = OnceCell::new();
 /// URL dashmap. This can be mutated, be careful not to do so
 static URLS: OnceCell<dashmap::DashMap<String, String>> = OnceCell::new();
-/// database connection.
-static DB: OnceCell<sqlx::Pool<sqlx::Postgres>> = OnceCell::new();
 /// shortenings that are not allowed
 static DISALLOWED_SHORTENINGS: OnceCell<std::collections::HashSet<String>> = OnceCell::new();
 
@@ -58,29 +56,9 @@ async fn main() {
     CONFIG
         .set(config.clone())
         .expect("Failed to write to config OnceCell");
-
-    // Checks for a PORT environment variable
-    let database_uri = std::env::var("DATABASE_URI")
-        .unwrap_or_else(|_| config.clone().database.expect("Database URI not set!"));
-    let pool = sqlx::postgres::PgPoolOptions::new()
-        .max_connections(2)
-        .connect(database_uri.as_str())
-        .await
-        .expect("Failed to connect to database");
-    sqlx::migrate!()
-        .run(&pool)
-        .await
-        .expect("Failed to run migrations");
-    let urls_vec = sqlx::query!("SELECT * FROM links")
-        .fetch_all(&pool)
-        .await
-        .expect("Failed to select links from database");
-    let urls = dashmap::DashMap::with_capacity(urls_vec.len());
-    for url in urls_vec {
-        urls.insert(url.link.to_lowercase(), url.destination);
-    }
+    let urls_bincode = utils::read_file_to_bytes(config.database);
+    let urls = bincode::deserialize(&urls_bincode[..]).expect("Failed to deserialize bincode file");
     URLS.set(urls).expect("Failed to set URLS OnceCell");
-    DB.set(pool).expect("Failed to set database OnceCell");
     // build our application with a route
     let app = Router::new()
         .route("/", get(redirect_handler::root))
@@ -146,5 +124,7 @@ async fn main() {
             .await
             .expect("Failed to bind to address, is something else using the port?");
     });
-    server_http.await.expect("Failed to await main HTTP process");
+    server_http
+        .await
+        .expect("Failed to await main HTTP process");
 }

@@ -2,10 +2,11 @@
 port = 24529
 # Root of the site, this might link to your company's homepage.
 root = "https://github.com/randomairborne/simpleshortener"
-# Postgres database URL.
-database = "mysql://simpleshortener:simpleshortener@localhost/simpleshortener"
+# Database path.
+database = "/etc/simpleshortener/links.bincode"
 # A key:value list of username:sha256-hashed passwords <default admin/admin>
 users = { admin = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"}
+
 
 # Uncomment to enable TLS
 # [tls]
