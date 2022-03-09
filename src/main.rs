@@ -56,8 +56,7 @@ async fn main() {
     CONFIG
         .set(config.clone())
         .expect("Failed to write to config OnceCell");
-    let urls_bincode = utils::read_file_to_bytes(config.database);
-    let urls = bincode::deserialize(&urls_bincode[..]).expect("Failed to deserialize bincode file");
+    let urls = utils::read_bincode(&config.database);
     URLS.set(urls).expect("Failed to set URLS OnceCell");
     // build our application with a route
     let app = Router::new()
@@ -76,17 +75,7 @@ async fn main() {
         .route("/simpleshortener/static/font.woff2", get(files::font2))
         .route("/favicon.ico", get(files::favicon));
 
-    // Checks for a PORT environment variable
-    let port = match std::env::var("PORT").map(|x| x.parse::<u16>()) {
-        Ok(Ok(port)) => port,
-        Err(_) => config.port.expect("Port not set!"),
-        Ok(Err(e)) => {
-            eprintln!("port environment variable invalid: {:#?}", e);
-            std::process::exit(3);
-        }
-    };
-
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+    let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
     tracing::log::info!("listening on {}", addr);
     if config.tls.is_some() {
         let key = utils::read_file_to_bytes(&config.clone().tls.unwrap().keyfile);
