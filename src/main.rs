@@ -79,13 +79,13 @@ async fn main() {
         .route("/favicon.ico", get(files::favicon));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
-    if config.tls.is_some() {
-        let key = utils::read_file_to_bytes(&config.tls.as_ref().unwrap().keyfile);
-        let cert = utils::read_file_to_bytes(&config.tls.as_ref().unwrap().certfile);
+    if let Some(tls_config) = config.tls {
+        let key = std::fs::read(&tls_config.keyfile).expect("IO error on key file");
+        let cert = std::fs::read(&tls_config.certfile).expect("IO error on certificate file");
         let tls_app = app.clone();
         let tls_port = match std::env::var("TLS_PORT").map(|x| x.parse::<u16>()) {
             Ok(Ok(port)) => port,
-            Err(_) => config.tls.unwrap().port,
+            Err(_) => tls_config.port,
             Ok(Err(e)) => {
                 eprintln!("port environment variable invalid: {:#?}", e);
                 std::process::exit(4);

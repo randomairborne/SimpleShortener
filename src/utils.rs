@@ -1,34 +1,31 @@
 use dashmap::DashMap;
-use std::fs::{self, File, OpenOptions};
-use std::io::{self, Read, Write};
+use std::fs::OpenOptions;
+use std::io::{Read, Write};
 use std::path::Path;
 
 pub fn read_bincode(filename: &String) -> DashMap<String, String> {
     tracing::debug!("Reading bincode database file!");
-    let mut f = OpenOptions::new()
-        .write(true)
+
+    let target_path = Path::new(filename);
+    if !target_path.exists() {
+        tracing::warn!("Creating new database...");
+        let new_map: DashMap<String, String> = DashMap::new();
+        let encoded: Vec<u8> = bincode::serialize(&new_map).unwrap();
+        std::fs::write(target_path, encoded)
+            .expect("failed to write to database file: check permissions");
+        return DashMap::new();
+    }
+
+    let f = OpenOptions::new()
         .read(true)
-        .create(true)
-        .open(filename)
+        .open(target_path)
         .expect("Failed to open file");
 
-    let metadata = fs::metadata(&filename).expect("unable to read metadata");
-    let mut buffer = vec![0; metadata.len() as usize];
-    f.read_exact(&mut buffer).expect("buffer overflow");
-    let deserialized: DashMap<String, String> = match bincode::deserialize(&buffer[..]) {
+    let deserialized: DashMap<String, String> = match bincode::deserialize_from(f) {
         Ok(map) => map,
         Err(e) => {
             match *e {
-                bincode::ErrorKind::Io(io_error) => {
-                    if io_error.kind() == io::ErrorKind::UnexpectedEof {
-                        tracing::warn!("Creating new database...");
-                        let new_map: DashMap<String, String> = DashMap::new();
-                        let encoded: Vec<u8> = bincode::serialize(&new_map).unwrap();
-                        f.write_all(&encoded).expect("Failed to write file!?");
-                        return DashMap::new();
-                    }
-                    panic!("I/O Error: {}", io_error)
-                }
+                bincode::ErrorKind::Io(io_error) => panic!("I/O Error: {}", io_error),
                 _ => panic!("Error deserializing database: {}", e),
             };
         }
@@ -46,13 +43,4 @@ pub fn save_bincode<P: AsRef<Path>>(
     let encoded: Vec<u8> = bincode::serialize(&map)?;
     f.write_all(&encoded)?;
     Ok(())
-}
-
-pub fn read_file_to_bytes<P: AsRef<Path>>(filename: P) -> Vec<u8> {
-    let mut f = File::open(&filename).expect("no file found");
-    let metadata = fs::metadata(&filename).expect("unable to read metadata");
-    let mut buffer = vec![0; metadata.len() as usize];
-    f.read_exact(&mut buffer).expect("buffer overflow");
-
-    buffer
 }
