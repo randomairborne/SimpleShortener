@@ -49,7 +49,6 @@ pub enum WebServerError {
     DbError(bincode::Error),
     InvalidUri(axum::http::uri::InvalidUri),
 
-    DbNotFound,
     UrlsNotFound,
     DisallowedNotFound,
     ConfigNotFound,
@@ -106,11 +105,6 @@ impl axum::response::IntoResponse for WebServerError {
             ),
             WebServerError::InvalidUri(e) => (
                 format!(r#"{{"error":"The redirect URI is invalid: {}"}}"#, e).into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
-            ),
-            WebServerError::DbNotFound => (
-                r#"{"error":"Database bincode not found"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
