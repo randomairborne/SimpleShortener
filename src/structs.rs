@@ -14,9 +14,9 @@ pub struct TLS {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
-    pub port: Option<u16>,
+    pub port: u16,
     pub root: Option<String>,
-    pub database: Option<String>,
+    pub database: String,
     pub users: std::collections::HashMap<String, String>,
     pub tls: Option<TLS>,
 }
@@ -46,7 +46,7 @@ pub enum WebServerError {
     UrlConflict,
     UrlDisallowed,
 
-    DbError(sqlx::Error),
+    DbError(bincode::Error),
     InvalidUri(axum::http::uri::InvalidUri),
 
     DbNotFound,
@@ -57,8 +57,8 @@ pub enum WebServerError {
     MissingHeaders,
 }
 
-impl From<sqlx::Error> for WebServerError {
-    fn from(e: sqlx::Error) -> Self {
+impl From<bincode::Error> for WebServerError {
+    fn from(e: bincode::Error) -> Self {
         Self::DbError(e)
     }
 }
