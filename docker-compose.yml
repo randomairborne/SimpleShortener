@@ -1,17 +1,6 @@
 version: "3"
 
 services:
-    postgres:
-        image: postgres:10
-        restart: always
-        networks:
-            - simpleshortener
-        volumes:
-            - pg_data:/var/lib/postgresql/data
-        environment:
-            POSTGRES_DB: simpleshortener
-            POSTGRES_USER: simpleshortener
-            POSTGRES_PASSWORD: simpleshortener
     simpleshortener:
         image: randomairborne/simpleshortener
         restart: always
@@ -20,12 +9,8 @@ services:
         ports:
             # change external port here, not in config.toml
             - "127.0.0.1:24529:24529"
-        depends_on:
-            - postgres
         environment:
             PORT: 24529
-            DATABASE_URI: postgresql://postgres?dbname=simpleshortener&user=simpleshortener&password=simpleshortener
-volumes:
-    pg_data:
+            DATABASE_PATH: /simpleshortener/data.rust-bincode
 networks:
     simpleshortener:
