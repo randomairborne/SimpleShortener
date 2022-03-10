@@ -15,12 +15,12 @@ pub fn spawn_db_thread() {
     std::thread::spawn(|| {
         let (tx, rx) = unbounded();
 
-        let config = crate::CONFIG
+        let save_path = crate::CONFIG
             .get()
-            .expect("load config before spawning db thread");
-
-        let save_path = std::env::var("DATABASE_URI")
-            .unwrap_or_else(|_| config.clone().database.expect("Database URI not set!"));
+            .map(|x| x.database)
+            .expect("set config before spawning background save thread")
+            .or_else(|| std::env::var("DATABASE_URI").ok())
+            .expect("DATABASE_URI env var not set");
 
         let tx2 = tx.clone();
 
