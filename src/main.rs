@@ -81,28 +81,14 @@ async fn main() {
         .route("/favicon.ico", get(files::favicon));
 
     // Checks for a PORT environment variable
-    let port = match std::env::var("PORT").map(|x| x.parse::<u16>()) {
-        Ok(Ok(port)) => port,
-        Err(_) => config.port.expect("Port not set!"),
-        Ok(Err(e)) => {
-            eprintln!("port environment variable invalid: {:#?}", e);
-            std::process::exit(3);
-        }
-    };
+    let port = utils::get_port(&config);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
-    if let Some(tls_config) = config.tls {
+    if let Some(ref tls_config) = config.tls {
         let key = std::fs::read(&tls_config.keyfile).expect("IO error on key file");
         let cert = std::fs::read(&tls_config.certfile).expect("IO error on certificate file");
         let tls_app = app.clone();
-        let tls_port = match std::env::var("TLS_PORT").map(|x| x.parse::<u16>()) {
-            Ok(Ok(port)) => port,
-            Err(_) => tls_config.port,
-            Ok(Err(e)) => {
-                eprintln!("port environment variable invalid: {:#?}", e);
-                std::process::exit(4);
-            }
-        };
+        let tls_port = utils::get_port_tls(&config);
         let server_tls = tokio::spawn(async move {
             axum_server::bind_rustls(
                 SocketAddr::from(([127, 0, 0, 1], tls_port)),

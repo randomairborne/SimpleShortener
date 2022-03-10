@@ -9,7 +9,7 @@ use std::borrow::Cow;
 pub struct TlsConfig {
     pub certfile: String,
     pub keyfile: String,
-    pub port: u16,
+    pub port: Option<u16>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

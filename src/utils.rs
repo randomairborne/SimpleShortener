@@ -38,3 +38,24 @@ pub fn save_bincode<P: AsRef<Path>>(
     f.write_all(&encoded)?;
     Ok(())
 }
+
+pub fn get_port(config: &crate::structs::Config) -> u16 {
+    match std::env::var("PORT").map(|x| x.parse::<u16>()) {
+        Ok(Ok(port)) => port,
+        Err(_) => config.port.expect("Port not set!"),
+        Ok(Err(e)) => panic!("port environment variable invalid: {}", e),
+    }
+}
+
+pub fn get_port_tls(config: &crate::structs::Config) -> u16 {
+    match std::env::var("TLS_PORT").map(|x| x.parse::<u16>()) {
+        Ok(Ok(port)) => port,
+        Err(_) => config
+            .clone()
+            .tls
+            .expect("TLS port not set!?")
+            .port
+            .expect("Port not set!"),
+        Ok(Err(e)) => panic!("TLS port environment variable invalid: {}", e),
+    }
+}
