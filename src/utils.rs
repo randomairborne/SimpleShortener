@@ -1,6 +1,6 @@
 use dashmap::DashMap;
 use std::fs::OpenOptions;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::Path;
 
 pub fn read_bincode(filename: &String) -> DashMap<String, String> {
