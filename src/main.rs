@@ -80,12 +80,12 @@ async fn main() {
 
     let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
     if config.tls.is_some() {
-        let key = utils::read_file_to_bytes(&config.clone().tls.unwrap().keyfile);
-        let cert = utils::read_file_to_bytes(&config.clone().tls.unwrap().certfile);
+        let key = utils::read_file_to_bytes(&config.tls.as_ref().unwrap().keyfile);
+        let cert = utils::read_file_to_bytes(&config.tls.as_ref().unwrap().certfile);
         let tls_app = app.clone();
         let tls_port = match std::env::var("TLS_PORT").map(|x| x.parse::<u16>()) {
             Ok(Ok(port)) => port,
-            Err(_) => config.clone().tls.unwrap().port,
+            Err(_) => config.tls.unwrap().port,
             Ok(Err(e)) => {
                 eprintln!("port environment variable invalid: {:#?}", e);
                 std::process::exit(4);

@@ -48,7 +48,7 @@ pub fn save_bincode<P: AsRef<Path>>(
     Ok(())
 }
 
-pub fn read_file_to_bytes(filename: &String) -> Vec<u8> {
+pub fn read_file_to_bytes<P: AsRef<Path>>(filename: P) -> Vec<u8> {
     let mut f = File::open(&filename).expect("no file found");
     let metadata = fs::metadata(&filename).expect("unable to read metadata");
     let mut buffer = vec![0; metadata.len() as usize];
