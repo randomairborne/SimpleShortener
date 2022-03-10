@@ -3,6 +3,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
 
+// Expect allowed here, as it is only called at the beginning of the program
 pub fn read_bincode(filename: &String) -> DashMap<String, String> {
     tracing::debug!("Reading bincode database file!");
 
@@ -21,15 +22,8 @@ pub fn read_bincode(filename: &String) -> DashMap<String, String> {
         .open(target_path)
         .expect("Failed to open file");
 
-    let deserialized: DashMap<String, String> = match bincode::deserialize_from(f) {
-        Ok(map) => map,
-        Err(e) => {
-            match *e {
-                bincode::ErrorKind::Io(io_error) => panic!("I/O Error: {}", io_error),
-                _ => panic!("Error deserializing database: {}", e),
-            };
-        }
-    };
+    let deserialized: DashMap<String, String> =
+        bincode::deserialize_from(f).expect("Failed to deserialize database");
     deserialized
 }
 

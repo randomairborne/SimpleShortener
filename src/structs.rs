@@ -14,9 +14,9 @@ pub struct TlsConfig {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
-    pub port: u16,
+    pub port: Option<u16>,
     pub root: Option<String>,
-    pub database: String,
+    pub database: Option<String>,
     pub users: std::collections::HashMap<String, String>,
     pub tls: Option<TlsConfig>,
 }

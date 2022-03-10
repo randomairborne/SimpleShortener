@@ -58,7 +58,9 @@ async fn main() {
     CONFIG
         .set(config.clone())
         .expect("Failed to write to config OnceCell");
-    let urls = utils::read_bincode(&config.database);
+    let database_path = std::env::var("DATABASE_URI")
+        .unwrap_or_else(|_| config.clone().database.expect("Database URI not set!"));
+    let urls = utils::read_bincode(&database_path);
     URLS.set(urls).expect("Failed to set URLS OnceCell");
     spawn_db_thread();
     // build our application with a route
@@ -78,7 +80,17 @@ async fn main() {
         .route("/simpleshortener/static/font.woff2", get(files::font2))
         .route("/favicon.ico", get(files::favicon));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
+    // Checks for a PORT environment variable
+    let port = match std::env::var("PORT").map(|x| x.parse::<u16>()) {
+        Ok(Ok(port)) => port,
+        Err(_) => config.port.expect("Port not set!"),
+        Ok(Err(e)) => {
+            eprintln!("port environment variable invalid: {:#?}", e);
+            std::process::exit(3);
+        }
+    };
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
     if let Some(tls_config) = config.tls {
         let key = std::fs::read(&tls_config.keyfile).expect("IO error on key file");
         let cert = std::fs::read(&tls_config.certfile).expect("IO error on certificate file");
