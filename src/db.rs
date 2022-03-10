@@ -28,9 +28,10 @@ pub fn spawn_db_thread() {
             .get()
             .expect("set URLs before spawning background save thread");
 
-        URL_FLUSH_TRIGGER
-            .set(tx)
-            .unwrap_or_else(|_| panic!("setting flush trigger handle failed"));
+        // this should be the very last thing before entering the loop, in case something else panics before
+        // this will essentially cause the entire program to silently not save to disk if this is not the last thing
+        // before the loop and something panics above
+        URL_FLUSH_TRIGGER.set(tx).unwrap_or_else(|_| unreachable!());
 
         while rx.recv().is_ok() {
             if let Err(e) = save_bincode(&save_path, links) {
