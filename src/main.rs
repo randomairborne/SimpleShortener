@@ -1,9 +1,11 @@
 mod admin;
+mod db;
 mod files;
 mod redirect_handler;
 mod structs;
 mod utils;
 
+use crate::db::spawn_db_thread;
 use axum::{routing::delete, routing::get, routing::patch, routing::put, Router};
 use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
@@ -58,6 +60,7 @@ async fn main() {
         .expect("Failed to write to config OnceCell");
     let urls = utils::read_bincode(&config.database);
     URLS.set(urls).expect("Failed to set URLS OnceCell");
+    spawn_db_thread();
     // build our application with a route
     let app = Router::new()
         .route("/", get(redirect_handler::root))
@@ -68,21 +71,21 @@ async fn main() {
         .route("/simpleshortener/api/delete/:id", delete(admin::delete))
         .route("/simpleshortener/api/add", put(admin::add))
         .route("/simpleshortener/api/list", get(admin::list))
-        .route("/simpleshortener", get(files::panelhtml))
-        .route("/simpleshortener/", get(files::panelhtml))
+        .route("/simpleshortener", get(files::panel_html))
+        .route("/simpleshortener/", get(files::panel_html))
         .route("/simpleshortener/static/link.png", get(files::logo))
         .route("/simpleshortener/static/font.woff", get(files::font))
         .route("/simpleshortener/static/font.woff2", get(files::font2))
         .route("/favicon.ico", get(files::favicon));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
-    if config.tls.is_some() {
-        let key = utils::read_file_to_bytes(&config.clone().tls.unwrap().keyfile);
-        let cert = utils::read_file_to_bytes(&config.clone().tls.unwrap().certfile);
+    if let Some(tls_config) = config.tls {
+        let key = std::fs::read(&tls_config.keyfile).expect("IO error on key file");
+        let cert = std::fs::read(&tls_config.certfile).expect("IO error on certificate file");
         let tls_app = app.clone();
         let tls_port = match std::env::var("TLS_PORT").map(|x| x.parse::<u16>()) {
             Ok(Ok(port)) => port,
-            Err(_) => config.clone().tls.unwrap().port,
+            Err(_) => tls_config.port,
             Ok(Err(e)) => {
                 eprintln!("port environment variable invalid: {:#?}", e);
                 std::process::exit(4);

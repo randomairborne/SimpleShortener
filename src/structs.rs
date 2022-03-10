@@ -6,7 +6,7 @@ use sha2::Digest;
 use std::borrow::Cow;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct TLS {
+pub struct TlsConfig {
     pub certfile: String,
     pub keyfile: String,
     pub port: u16,
@@ -18,7 +18,7 @@ pub struct Config {
     pub root: Option<String>,
     pub database: String,
     pub users: std::collections::HashMap<String, String>,
-    pub tls: Option<TLS>,
+    pub tls: Option<TlsConfig>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -49,7 +49,6 @@ pub enum WebServerError {
     DbError(bincode::Error),
     InvalidUri(axum::http::uri::InvalidUri),
 
-    DbNotFound,
     UrlsNotFound,
     DisallowedNotFound,
     ConfigNotFound,
@@ -106,11 +105,6 @@ impl axum::response::IntoResponse for WebServerError {
             ),
             WebServerError::InvalidUri(e) => (
                 format!(r#"{{"error":"The redirect URI is invalid: {}"}}"#, e).into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
-            ),
-            WebServerError::DbNotFound => (
-                r#"{"error":"Database bincode not found"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
@@ -190,13 +184,12 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
             .map(|x| format!("{:02x}", x))
             .collect::<String>();
         let existing_hash = config.users.get(&username).map(String::as_str);
-        tracing::debug!(
-            "Attempting to log in user {}",
-            username
-        );
-        tracing::trace!("supplied password hash is {}, correct password hash is {}",
+        tracing::debug!("Attempting to log in user {}", username);
+        tracing::trace!(
+            "supplied password hash is {}, correct password hash is {}",
             result,
-            existing_hash.unwrap_or("(failed to get proper password hash)"));
+            existing_hash.unwrap_or("(failed to get proper password hash)")
+        );
 
         if existing_hash.map_or(false, |user| user == result) {
             Ok(Self)
