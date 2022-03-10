@@ -1,9 +1,11 @@
 mod admin;
+mod db;
 mod files;
 mod redirect_handler;
 mod structs;
 mod utils;
 
+use crate::db::spawn_db_thread;
 use axum::{routing::delete, routing::get, routing::patch, routing::put, Router};
 use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
@@ -58,6 +60,7 @@ async fn main() {
         .expect("Failed to write to config OnceCell");
     let urls = utils::read_bincode(&config.database);
     URLS.set(urls).expect("Failed to set URLS OnceCell");
+    spawn_db_thread();
     // build our application with a route
     let app = Router::new()
         .route("/", get(redirect_handler::root))

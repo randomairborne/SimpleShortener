@@ -1,6 +1,7 @@
 use dashmap::DashMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read, Write};
+use std::path::Path;
 
 pub fn read_bincode(filename: &String) -> dashmap::DashMap<String, String> {
     tracing::debug!("Reading bincode database file!");
@@ -35,7 +36,10 @@ pub fn read_bincode(filename: &String) -> dashmap::DashMap<String, String> {
     deserialized
 }
 
-pub fn save_bincode(filename: String, map: &DashMap<String, String>) -> Result<(), bincode::Error> {
+pub fn save_bincode<P: AsRef<Path>>(
+    filename: P,
+    map: &DashMap<String, String>,
+) -> Result<(), bincode::Error> {
     let mut f = OpenOptions::new().write(true).read(false).open(filename)?;
     tracing::debug!("Saving bincode file...");
     tracing::trace!("with data {:#?}", map);
