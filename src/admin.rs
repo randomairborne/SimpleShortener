@@ -1,4 +1,5 @@
 use crate::structs::{Add, Authorization, Edit, List, WebServerError};
+use crate::utils::save_bincode;
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::Json;
@@ -22,6 +23,14 @@ pub async fn edit(
         .ok_or(WebServerError::NotFoundJson)?;
 
     links.insert(link, destination);
+    save_bincode(
+        crate::CONFIG
+            .get()
+            .ok_or(WebServerError::DbNotFound)?
+            .clone()
+            .database,
+        links,
+    )?;
 
     Ok(r#"{"message":"Link edited!"}\n"#)
 }
@@ -37,7 +46,14 @@ pub async fn delete(
         .ok_or(WebServerError::NotFoundJson)?;
 
     links.remove(&link);
-
+    save_bincode(
+        crate::CONFIG
+            .get()
+            .ok_or(WebServerError::DbNotFound)?
+            .clone()
+            .database,
+        links,
+    )?;
     Ok(r#"{"message":"Link removed!"}"#)
 }
 
@@ -63,6 +79,13 @@ pub async fn add(
         .ok_or(WebServerError::UrlDisallowed)?;
 
     links.insert(link, destination);
-
+    save_bincode(
+        crate::CONFIG
+            .get()
+            .ok_or(WebServerError::DbNotFound)?
+            .clone()
+            .database,
+        links,
+    )?;
     Ok((StatusCode::CREATED, r#"{"message":"Link added!"}"#))
 }

@@ -110,7 +110,7 @@ impl axum::response::IntoResponse for WebServerError {
                 "application/json",
             ),
             WebServerError::DbNotFound => (
-                r#"{"error":"Database pool not found"}"#.into(),
+                r#"{"error":"Database bincode not found"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
@@ -191,11 +191,12 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
             .collect::<String>();
         let existing_hash = config.users.get(&username).map(String::as_str);
         tracing::debug!(
-            "Attempting to log in user {}, supplied password hash is {}, correct password hash is {}",
-            username,
-            result,
-            existing_hash.unwrap_or("(failed to get proper password hash)")
+            "Attempting to log in user {}",
+            username
         );
+        tracing::trace!("supplied password hash is {}, correct password hash is {}",
+            result,
+            existing_hash.unwrap_or("(failed to get proper password hash)"));
 
         if existing_hash.map_or(false, |user| user == result) {
             Ok(Self)

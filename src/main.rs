@@ -76,7 +76,6 @@ async fn main() {
         .route("/favicon.ico", get(files::favicon));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
-    tracing::log::info!("listening on {}", addr);
     if config.tls.is_some() {
         let key = utils::read_file_to_bytes(&config.clone().tls.unwrap().keyfile);
         let cert = utils::read_file_to_bytes(&config.clone().tls.unwrap().certfile);
@@ -100,6 +99,7 @@ async fn main() {
             .await
             .expect("Failed to bind to address, is something else using the port?");
         });
+        tracing::log::info!("listening on https://{}", addr);
         server_tls.await.expect("Failed to await HTTPS process");
     }
     let server_http = tokio::spawn(async move {
@@ -113,6 +113,7 @@ async fn main() {
             .await
             .expect("Failed to bind to address, is something else using the port?");
     });
+    tracing::log::info!("listening on http://{}", addr);
     server_http
         .await
         .expect("Failed to await main HTTP process");
