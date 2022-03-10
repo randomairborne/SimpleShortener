@@ -24,6 +24,7 @@ pub fn read_bincode(filename: &String) -> DashMap<String, String> {
 
     let deserialized: DashMap<String, String> =
         bincode::deserialize_from(f).expect("Failed to deserialize database");
+    tracing::trace!("Got database: {:#?}", deserialized);
     deserialized
 }
 
