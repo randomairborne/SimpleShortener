@@ -1,5 +1,7 @@
 # Port to run SimpleShortener on. Can be overridden with the `PORT` environment variable.
 port = 24529
+# Unix domain socket. Comment out the port and uncomment this to enable.
+# socket = "/run/simpleshortener.sock"
 # Root of the site (what you get by going to https://example.com), this might link to your company's homepage.
 root = "https://github.com/randomairborne/SimpleShortener"
 # Database path.

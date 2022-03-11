@@ -106,17 +106,35 @@ async fn main() {
         tracing::log::info!("listening on https://{}", addr);
         server_tls.await.expect("Failed to await HTTPS process");
     }
-    let server_http = tokio::spawn(async move {
-        axum::Server::bind(&addr)
-            .serve(app.into_make_service())
-            .with_graceful_shutdown(async {
-                tokio::signal::ctrl_c()
-                    .await
-                    .expect("failed to listen for ctrl+c");
-            })
-            .await
-            .expect("Failed to bind to address, is something else using the port?");
-    });
+    if config.socket.is_some() {
+        let listener = tokio::net::UnixListener::bind(config.socket.unwrap()).expect("Failed to bind to socket");
+        let stream = tokio_stream::wrappers::UnixListenerStream::new(listener);
+    let acceptor = hyper::server::accept::from_stream(stream);
+        let server_http = tokio::spawn(async move {
+            axum::Server::bind(&addr)
+                .serve(app.into_make_service())
+                .with_graceful_shutdown(async {
+                    tokio::signal::ctrl_c()
+                        .await
+                        .expect("failed to listen for ctrl+c");
+                })
+                .await
+                .expect("Failed to bind to address, is something else using the port?");
+        });
+    } else {
+let server_http = tokio::spawn(async move {
+            axum::Server::bind(&addr)
+                .serve(app.into_make_service())
+                .with_graceful_shutdown(async {
+                    tokio::signal::ctrl_c()
+                        .await
+                        .expect("failed to listen for ctrl+c");
+                })
+                .await
+                .expect("Failed to bind to address, is something else using the port?");
+        });
+
+    }
     tracing::log::info!("listening on http://{}", addr);
     server_http
         .await
