@@ -34,7 +34,7 @@ jobs:
                 uses: docker/build-push-action@v2
                 with:
                     context: .
-                    file: ./Dockerfile.aarch64
+                    file: ./dockerfiles/Dockerfile.aarch64
                     platforms: linux/arm64
                     push: true
                     tags: randomairborne/simpleshortener:aarch64

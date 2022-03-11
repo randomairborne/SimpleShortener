@@ -37,7 +37,7 @@ jobs:
                 uses: docker/build-push-action@v2
                 with:
                     context: .
-                    file: ./Dockerfile.armv7
+                    file: ./dockerfiles/Dockerfile.armv7
                     platforms: linux/arm/v7
                     push: true
                     tags: randomairborne/simpleshortener:armv7
