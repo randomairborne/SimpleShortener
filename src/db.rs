@@ -17,7 +17,7 @@ pub fn spawn_db_thread() {
 
         let save_path = crate::CONFIG
             .get()
-            .map(|x| x.database)
+            .map(|x| x.database.clone())
             .expect("set config before spawning background save thread")
             .or_else(|| std::env::var("DATABASE_URI").ok())
             .expect("DATABASE_URI env var not set");
