@@ -88,7 +88,7 @@ async fn main() {
         let key = std::fs::read(&tls_config.keyfile).expect("IO error on key file");
         let cert = std::fs::read(&tls_config.certfile).expect("IO error on certificate file");
         let tls_app = app.clone();
-        let tls_port = utils::get_port_tls(&config);
+        let tls_port = utils::get_port_tls(&tls_config);
         let server_tls = tokio::spawn(async move {
             axum_server::bind_rustls(
                 SocketAddr::from(([127, 0, 0, 1], tls_port)),

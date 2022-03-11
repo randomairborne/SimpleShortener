@@ -48,15 +48,10 @@ pub fn get_port(config: &crate::structs::Config) -> u16 {
     }
 }
 
-pub fn get_port_tls(config: &crate::structs::Config) -> u16 {
+pub fn get_port_tls(tls_config: &crate::structs::TlsConfig) -> u16 {
     match std::env::var("TLS_PORT").map(|x| x.parse::<u16>()) {
         Ok(Ok(port)) => port,
-        Err(_) => config
-            .clone()
-            .tls
-            .expect("TLS port not set!?")
-            .port
-            .expect("Port not set!"),
+        Err(_) => tls_config.port.expect("Port not set!"),
         Ok(Err(e)) => panic!("TLS port environment variable invalid: {}", e),
     }
 }
