@@ -58,8 +58,7 @@ async fn main() {
     CONFIG
         .set(config.clone())
         .expect("Failed to write to config OnceCell");
-    let database_path = std::env::var("DATABASE_URI")
-        .unwrap_or_else(|_| config.clone().database.expect("Database URI not set!"));
+    let database_path = config.database.clone().or_else(|| std::env::var("DATABASE_URI").ok()).expect("Database URI not set!");
     let urls = utils::read_bincode(&database_path);
     URLS.set(urls).expect("Failed to set URLS OnceCell");
     spawn_db_thread();
