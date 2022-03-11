@@ -5,7 +5,7 @@ mod redirect_handler;
 mod structs;
 mod utils;
 
-use crate::db::spawn_db_thread;
+use crate::db::init_db_storage;
 use axum::{routing::delete, routing::get, routing::patch, routing::put, Router};
 use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
@@ -61,7 +61,7 @@ async fn main() {
     let database_path = config.database.clone().or_else(|| std::env::var("DATABASE_URI").ok()).expect("Database URI not set!");
     let urls = utils::read_bincode(&database_path);
     URLS.set(urls).expect("Failed to set URLS OnceCell");
-    spawn_db_thread();
+    init_db_storage();
     // build our application with a route
     let app = Router::new()
         .route("/", get(redirect_handler::root))

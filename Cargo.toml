@@ -22,7 +22,7 @@ toml = "0.5"
 sha2 = "0.10"
 dashmap = { version = "5.0", features = ["serde"] }
 async-trait = "0.1"
-crossbeam-channel = "0.5"
+parking_lot = "0.12"
 
 [profile.release]
 codegen-units = 1

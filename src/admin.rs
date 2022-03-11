@@ -23,7 +23,7 @@ pub async fn edit(
         .ok_or(WebServerError::NotFoundJson)?;
 
     links.insert(link, destination);
-    flush_urls();
+    flush_urls()?;
     Ok(r#"{"message":"Link edited!"}\n"#)
 }
 
@@ -38,7 +38,7 @@ pub async fn delete(
         .ok_or(WebServerError::NotFoundJson)?;
 
     links.remove(&link);
-    flush_urls();
+    flush_urls()?;
     Ok(r#"{"message":"Link removed!"}"#)
 }
 
@@ -64,6 +64,6 @@ pub async fn add(
         .ok_or(WebServerError::UrlDisallowed)?;
 
     links.insert(link, destination);
-    flush_urls();
+    flush_urls()?;
     Ok((StatusCode::CREATED, r#"{"message":"Link added!"}"#))
 }
