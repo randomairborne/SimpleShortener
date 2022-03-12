@@ -219,14 +219,14 @@
         submitButton.innerHTML = "Update";
         submitButton.addEventListener("click", function () {updateExisting(submitButton)});
         submitButton.setAttribute("class", "update-button");
-        async function updateExistingKeyPressHandler(event) {if (event.key === "Enter") await updateExisting(submitButton);}
-        destElement.addEventListener("keypress", updateExistingKeyPressHandler);
 
         let destElement = document.createElement("input");
         destElement.type = "url";
         destElement.value = linkArray[link];
         destElement.placeholder = "Destination";
         destElement.setAttribute("size", "50");
+        async function updateExistingKeyPressHandler(event) {if (event.key === "Enter") await updateExisting(submitButton);}
+        destElement.addEventListener("keypress", updateExistingKeyPressHandler);
 
         let deleteButton = document.createElement("button");
         deleteButton.innerHTML = "Delete";
