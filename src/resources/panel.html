@@ -99,7 +99,7 @@
   <h1>SimpleShortener Panel</h1>
   <noscript>This panel unfortunately requires JavaScript.</noscript>
 
-  <body onload="onLoad()">
+  <body>
     <div id="login">
       <input id="username-input" placeholder="Username" />
       <br />
@@ -111,7 +111,7 @@
       />
       <br />
       <br />
-      <button onclick="login()" id="login-button">Login</button>
+      <button id="login-button">Login</button>
       <div id="login-status"></div>
     </div>
     <div id="panel" style="display: none">
@@ -134,18 +134,18 @@
                 size="50"
               />
             </td>
-            <td><button id="add-button" onclick="addNew()">Add</button></td>
+            <td><button id="add-button">Add</button></td>
           </tr>
         </table>
       </div>
       <br />
-      <button onclick="logout()" id="logout-button">Log Out</button>
+      <button id="logout-button">Log Out</button>
     </div>
     <br />
     <a href="/simpleshortener/api/">API</a>
   </body>
   <script>
-    const apiLocation = window.location.protocol + "//" + window.location.host;
+    const apiLocation = "https://vky.one";
     var username = null;
     var password = null;
     var totalUrls = 0;
@@ -223,12 +223,12 @@
 
         let submitButton = document.createElement("button");
         submitButton.innerHTML = "Update";
-        submitButton.setAttribute("onclick", "updateExisting(this)");
+        submitButton.addEventListener("click", function () {updateExisting(submitButton)});
         submitButton.setAttribute("class", "update-button");
 
         let deleteButton = document.createElement("button");
         deleteButton.innerHTML = "Delete";
-        deleteButton.setAttribute("onclick", "deleteExisting(this)");
+        deleteButton.addEventListener("click", function () {deleteExisting(deleteButton)});
         deleteButton.setAttribute("class", "delete-button");
 
         let newRowElement = linksTableElement.insertRow(idx + 1);
@@ -292,12 +292,12 @@
 
       let submitButton = document.createElement("button");
       submitButton.innerHTML = "Update";
-      submitButton.setAttribute("onclick", "updateExisting(this)");
+      submitButton.addEventListener("click", function () {updateExisting(submitButton)});
       submitButton.setAttribute("class", "update-button");
 
       let deleteButton = document.createElement("button");
       deleteButton.innerHTML = "Delete";
-      deleteButton.setAttribute("onclick", "deleteExisting(this)");
+      deleteButton.addEventListener("click", function () {deleteExisting(deleteButton)});
       deleteButton.setAttribute("class", "delete-button");
 
       let newRowElement = linksTableElement.insertRow(totalUrls + 1);
@@ -373,5 +373,13 @@
         totalUrls--;
       }
     }
+  </script>
+
+  <script>
+      // register all event listeners
+      document.body.addEventListener("load", onLoad);
+      document.getElementById("login-button").addEventListener("click", login);
+      document.getElementById("add-button").addEventListener("click", addNew);
+      document.getElementById("logout-button").addEventListener("click", logout);
   </script>
 </html>
