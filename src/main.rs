@@ -61,7 +61,7 @@ async fn main() {
     let database_path = config
         .database
         .clone()
-        .or_else(|| std::env::var("DATABASE_URI").ok())
+        .or_else(|| std::env::var("DATABASE_PATH").ok())
         .expect("Database URI not set!");
     let urls = utils::read_bincode(&database_path);
     URLS.set(urls).expect("Failed to set URLS OnceCell");
@@ -83,33 +83,30 @@ async fn main() {
         .route("/simpleshortener/static/font.woff2", get(files::font2))
         .route("/favicon.ico", get(files::favicon));
 
-    // Checks for a PORT environment variable
-    let port = utils::get_port(&config);
+    if config.socket.is_none() {
+        // Checks for a PORT environment variable
+        let port = utils::get_port(&config);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
-    if let Some(ref tls_config) = config.tls {
-        let key = std::fs::read(&tls_config.keyfile).expect("IO error on key file");
-        let cert = std::fs::read(&tls_config.certfile).expect("IO error on certificate file");
-        let tls_app = app.clone();
-        let tls_port = utils::get_port_tls(tls_config);
-        let server_tls = tokio::spawn(async move {
-            axum_server::bind_rustls(
-                SocketAddr::from(([127, 0, 0, 1], tls_port)),
-                axum_server::tls_rustls::RustlsConfig::from_pem(cert, key)
-                    .await
-                    .expect("Bad TLS pemfiles"),
-            )
-            .serve(tls_app.into_make_service())
-            .await
-            .expect("Failed to bind to address, is something else using the port?");
-        });
-        tracing::log::info!("listening on https://{}", addr);
-        server_tls.await.expect("Failed to await HTTPS process");
-    }
-    if config.socket.is_some() {
-        let listener = tokio::net::UnixListener::bind(config.socket.unwrap()).expect("Failed to bind to socket");
-        let stream = tokio_stream::wrappers::UnixListenerStream::new(listener);
-    let acceptor = hyper::server::accept::from_stream(stream);
+        let addr = SocketAddr::from(([127, 0, 0, 1], port));
+        if let Some(ref tls_config) = config.tls {
+            let key = std::fs::read(&tls_config.keyfile).expect("IO error on key file");
+            let cert = std::fs::read(&tls_config.certfile).expect("IO error on certificate file");
+            let tls_app = app.clone();
+            let tls_port = utils::get_port_tls(tls_config);
+            let server_tls = tokio::spawn(async move {
+                axum_server::bind_rustls(
+                    SocketAddr::from(([127, 0, 0, 1], tls_port)),
+                    axum_server::tls_rustls::RustlsConfig::from_pem(cert, key)
+                        .await
+                        .expect("Bad TLS pemfiles"),
+                )
+                .serve(tls_app.into_make_service())
+                .await
+                .expect("Failed to bind to address, is something else using the port?");
+            });
+            tracing::log::info!("listening on https://{}", addr);
+            server_tls.await.expect("Failed to await HTTPS process");
+        }
         let server_http = tokio::spawn(async move {
             axum::Server::bind(&addr)
                 .serve(app.into_make_service())
@@ -121,9 +118,18 @@ async fn main() {
                 .await
                 .expect("Failed to bind to address, is something else using the port?");
         });
+        tracing::log::info!("listening on http://{}", addr);
+        server_http
+            .await
+            .expect("Failed to await main HTTP process");
     } else {
-let server_http = tokio::spawn(async move {
-            axum::Server::bind(&addr)
+        let socket = config.socket.expect("Socket not set?");
+        let listener = tokio::net::UnixListener::bind(&socket)
+            .expect("Failed to bind to socket");
+        let stream = tokio_stream::wrappers::UnixListenerStream::new(listener);
+        let acceptor = hyper::server::accept::from_stream(stream);
+        let server_http = tokio::spawn(async move {
+            axum::Server::builder(acceptor)
                 .serve(app.into_make_service())
                 .with_graceful_shutdown(async {
                     tokio::signal::ctrl_c()
@@ -133,10 +139,9 @@ let server_http = tokio::spawn(async move {
                 .await
                 .expect("Failed to bind to address, is something else using the port?");
         });
-
+        tracing::log::info!("listening on http://{}", &socket);
+        server_http
+            .await
+            .expect("Failed to await main HTTP process");
     }
-    tracing::log::info!("listening on http://{}", addr);
-    server_http
-        .await
-        .expect("Failed to await main HTTP process");
 }

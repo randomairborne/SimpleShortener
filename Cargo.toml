@@ -24,6 +24,7 @@ sha2 = "0.10"
 dashmap = { version = "5.0", features = ["serde"] }
 async-trait = "0.1"
 parking_lot = "0.12"
+hyper = "0.14"
 
 [profile.release]
 codegen-units = 1
