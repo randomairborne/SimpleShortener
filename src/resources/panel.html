@@ -388,5 +388,8 @@
       async function loginKeyPressHandler(event) {if (event.key === "Enter") await login();}
       document.getElementById("password-input").addEventListener("keypress", loginKeyPressHandler);
       document.getElementById("username-input").addEventListener("keypress", loginKeyPressHandler);
+      async function newLinkKeyPressHandler(event) {if (event.key === "Enter") await addNew();}
+      document.getElementById("new-link-src").addEventListener("keypress", newLinkKeyPressHandler);
+      document.getElementById("new-link-dst").addEventListener("keypress", newLinkKeyPressHandler);
   </script>
 </html>
