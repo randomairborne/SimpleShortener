@@ -50,6 +50,7 @@ pub fn get_port(config: &crate::structs::Config) -> u16 {
     }
 }
 
+#[cfg(feature = "tls")]
 pub fn get_port_tls(tls_config: &crate::structs::TlsConfig) -> u16 {
     match std::env::var("TLS_PORT").map(|x| x.parse::<u16>()) {
         Ok(Ok(port)) => port,

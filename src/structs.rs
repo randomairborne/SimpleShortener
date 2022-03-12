@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use sha2::Digest;
 use std::borrow::Cow;
 
+#[cfg(feature = "tls")]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TlsConfig {
     pub certfile: String,
@@ -19,6 +20,7 @@ pub struct Config {
     pub root: Option<String>,
     pub database: Option<String>,
     pub users: std::collections::HashMap<String, String>,
+    #[cfg(feature = "tls")]
     pub tls: Option<TlsConfig>,
 }
 

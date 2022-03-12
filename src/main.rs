@@ -71,6 +71,7 @@ async fn main() {
         let port = utils::get_port(&config);
 
         let addr = SocketAddr::from(([127, 0, 0, 1], port));
+        #[cfg(feature = "tls")]
         if let Some(ref tls_config) = config.tls {
             let key = std::fs::read(&tls_config.keyfile).expect("IO error on key file");
             let cert = std::fs::read(&tls_config.certfile).expect("IO error on certificate file");
