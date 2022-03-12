@@ -6,7 +6,6 @@ mod structs;
 mod utils;
 
 use crate::db::init_db_storage;
-use axum::{routing::delete, routing::get, routing::patch, routing::put, Router};
 use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
 
@@ -66,23 +65,7 @@ async fn main() {
     let urls = utils::read_bincode(&database_path);
     URLS.set(urls).expect("Failed to set URLS OnceCell");
     init_db_storage();
-    // build our application with a route
-    let app = Router::new()
-        .route("/", get(redirect_handler::root))
-        .route("/:path", get(redirect_handler::redirect))
-        .route("/simpleshortener/api", get(files::doc))
-        .route("/simpleshortener/api/", get(files::doc))
-        .route("/simpleshortener/api/edit/:id", patch(admin::edit))
-        .route("/simpleshortener/api/delete/:id", delete(admin::delete))
-        .route("/simpleshortener/api/add", put(admin::add))
-        .route("/simpleshortener/api/list", get(admin::list))
-        .route("/simpleshortener", get(files::panel_html))
-        .route("/simpleshortener/", get(files::panel_html))
-        .route("/simpleshortener/static/link.png", get(files::logo))
-        .route("/simpleshortener/static/font.woff", get(files::font))
-        .route("/simpleshortener/static/font.woff2", get(files::font2))
-        .route("/favicon.ico", get(files::favicon));
-
+    let app = utils::build_app();
     if config.socket.is_none() {
         // Checks for a PORT environment variable
         let port = utils::get_port(&config);
@@ -124,8 +107,7 @@ async fn main() {
             .expect("Failed to await main HTTP process");
     } else {
         let socket = config.socket.expect("Socket not set?");
-        let listener = tokio::net::UnixListener::bind(&socket)
-            .expect("Failed to bind to socket");
+        let listener = tokio::net::UnixListener::bind(&socket).expect("Failed to bind to socket");
         let stream = tokio_stream::wrappers::UnixListenerStream::new(listener);
         let acceptor = hyper::server::accept::from_stream(stream);
         let server_http = tokio::spawn(async move {
