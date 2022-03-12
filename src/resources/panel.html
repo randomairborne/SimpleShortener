@@ -215,16 +215,18 @@
         let linkElement = document.createElement("label");
         linkElement.innerText = link;
 
+        let submitButton = document.createElement("button");
+        submitButton.innerHTML = "Update";
+        submitButton.addEventListener("click", function () {updateExisting(submitButton)});
+        submitButton.setAttribute("class", "update-button");
+        async function updateExistingKeyPressHandler(event) {if (event.key === "Enter") await updateExisting(submitButton);}
+        destElement.addEventListener("keypress", updateExistingKeyPressHandler);
+
         let destElement = document.createElement("input");
         destElement.type = "url";
         destElement.value = linkArray[link];
         destElement.placeholder = "Destination";
         destElement.setAttribute("size", "50");
-
-        let submitButton = document.createElement("button");
-        submitButton.innerHTML = "Update";
-        submitButton.addEventListener("click", function () {updateExisting(submitButton)});
-        submitButton.setAttribute("class", "update-button");
 
         let deleteButton = document.createElement("button");
         deleteButton.innerHTML = "Delete";
@@ -284,16 +286,18 @@
       let linkElement = document.createElement("label");
       linkElement.innerText = src;
 
+      let submitButton = document.createElement("button");
+      submitButton.innerHTML = "Update";
+      submitButton.addEventListener("click", function () {updateExisting(submitButton)});
+      submitButton.setAttribute("class", "update-button");
+
       let destElement = document.createElement("input");
       destElement.type = "url";
       destElement.value = dst;
       destElement.placeholder = "Destination";
       destElement.setAttribute("size", "50");
-
-      let submitButton = document.createElement("button");
-      submitButton.innerHTML = "Update";
-      submitButton.addEventListener("click", function () {updateExisting(submitButton)});
-      submitButton.setAttribute("class", "update-button");
+      async function updateExistingKeyPressHandler(event) {if (event.key === "Enter") await updateExisting(submitButton);}
+      destElement.addEventListener("keypress", updateExistingKeyPressHandler);
 
       let deleteButton = document.createElement("button");
       deleteButton.innerHTML = "Delete";
@@ -381,5 +385,8 @@
       document.getElementById("login-button").addEventListener("click", login);
       document.getElementById("add-button").addEventListener("click", addNew);
       document.getElementById("logout-button").addEventListener("click", logout);
+      async function loginKeyPressHandler(event) {if (event.key === "Enter") await login();}
+      document.getElementById("password-input").addEventListener("keypress", loginKeyPressHandler);
+      document.getElementById("username-input").addEventListener("keypress", loginKeyPressHandler);
   </script>
 </html>
