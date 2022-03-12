@@ -20,6 +20,8 @@ database = "postgres://username:password@localhost/database"
 users = { admin = "fc8252c8dc55839967c58b9ad755a59b61b67c13227ddae4bd3f78a38bf394f7" }
 
 # Uncomment to enable TLS
+# This also requires the TLS-enabled binary:
+# if the default binary is downloaded, TLS is entirely ignored
 # [tls]
 # port = 443
 # certfile = "/path/to/cert.pem"
@@ -31,7 +33,15 @@ then run with `./target/bin/simpleshortener /path/to/config.toml`
 
 ## Building
 You can build from source with [rust](https://rust-lang.org)
+
+### Without TLS support
 ```bash
 git clone --branch nodb https://github.com/randomairborne/SimpleShortener.git
 cargo build --release
+```
+
+### With TLS support
+```bash
+git clone --branch nodb https://github.com/randomairborne/SimpleShortener.git
+cargo build --release --features tls
 ```

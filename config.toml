@@ -11,6 +11,8 @@ users = { admin = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a
 
 
 # Uncomment to enable TLS
+# This also requires the TLS-enabled binary:
+# if the default binary is downloaded, TLS is entirely ignored
 # [tls]
 # port = 443
 # certfile = "/path/to/cert.pem"
