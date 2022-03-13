@@ -30,6 +30,9 @@ async-trait = "0.1"
 parking_lot = "0.12"
 hyper = "0.14"
 
+[dev-dependencies]
+tower = "0.4"
+
 [profile.release]
 codegen-units = 1
 lto = "fat"
