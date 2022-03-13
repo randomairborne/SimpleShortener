@@ -5,6 +5,8 @@ use axum::http::StatusCode;
 use axum::Json;
 use std::ops::Not;
 
+static DISALLOWED_SHORTENINGS: [&'static str; 3] = ["", "favicon.ico", "simpleshortener"];
+
 pub async fn list(_: crate::structs::Authorization) -> Result<Json<List>, WebServerError> {
     Ok(Json(List {
         links: crate::URLS.get().ok_or(WebServerError::UrlsNotFound)?,
@@ -55,10 +57,8 @@ pub async fn add(
         .then(|| ())
         .ok_or(WebServerError::UrlConflict)?;
 
-    crate::DISALLOWED_SHORTENINGS
-        .get()
-        .ok_or(WebServerError::DisallowedNotFound)?
-        .contains(&link)
+    DISALLOWED_SHORTENINGS
+        .contains(&link.as_str())
         .not()
         .then(|| ())
         .ok_or(WebServerError::UrlDisallowed)?;

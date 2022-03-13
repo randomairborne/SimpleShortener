@@ -3,20 +3,18 @@ mod db;
 mod files;
 mod redirect_handler;
 mod structs;
-mod utils;
 mod tests;
+mod utils;
 
 use crate::db::init_db_storage;
+use crate::structs::Config;
 use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
-use crate::structs::Config;
 
 /// Configuration oncecell, holds the Config struct and can easily be pulled from
 static CONFIG: OnceCell<structs::Config> = OnceCell::new();
 /// URL dashmap. This can be mutated, be careful not to do so
 static URLS: OnceCell<dashmap::DashMap<String, String>> = OnceCell::new();
-/// shortenings that are not allowed
-static DISALLOWED_SHORTENINGS: OnceCell<std::collections::HashSet<String>> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
@@ -86,13 +84,6 @@ async fn main() {
 }
 
 fn init() -> Config {
-    DISALLOWED_SHORTENINGS
-        .set(std::collections::HashSet::from([
-            String::from(""),
-            String::from("favicon.ico"),
-            String::from("simpleshortener"),
-        ]))
-        .expect("Failed to set disallowed shortenings");
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_env("LOG"))
         .init();

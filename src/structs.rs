@@ -53,7 +53,6 @@ pub enum WebServerError {
     InvalidUri(axum::http::uri::InvalidUri),
 
     UrlsNotFound,
-    DisallowedNotFound,
     ConfigNotFound,
     InvalidRedirectUri,
     MissingHeaders,
@@ -113,11 +112,6 @@ impl axum::response::IntoResponse for WebServerError {
             ),
             WebServerError::UrlsNotFound => (
                 r#"{"error":"Internal URL mapping list not found"}"#.into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
-            ),
-            WebServerError::DisallowedNotFound => (
-                r#"{"error":"Internal disallowed URL list not found"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
