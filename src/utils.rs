@@ -1,9 +1,28 @@
 use crate::{admin, files, redirect_handler};
-use axum::routing::{delete, get, patch, put, Router};
+use axum::routing::{delete, get, patch, post, put, Router};
 use dashmap::DashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::Path;
+// Build our app
+pub fn build_app() -> axum::Router {
+    Router::new()
+        .route("/", get(redirect_handler::root))
+        .route("/:path", get(redirect_handler::redirect))
+        .route("/simpleshortener/api", get(files::doc))
+        .route("/simpleshortener/api/", get(files::doc))
+        .route("/simpleshortener/api/edit/:id", patch(admin::edit))
+        .route("/simpleshortener/api/delete/:id", delete(admin::delete))
+        .route("/simpleshortener/api/add", put(admin::add))
+        .route("/simpleshortener/api/list", get(admin::list))
+        .route("/simpleshortener/api/qr", post(admin::qr))
+        .route("/simpleshortener", get(files::panel_html))
+        .route("/simpleshortener/", get(files::panel_html))
+        .route("/simpleshortener/static/link.png", get(files::logo))
+        .route("/simpleshortener/static/font.woff", get(files::font))
+        .route("/simpleshortener/static/font.woff2", get(files::font2))
+        .route("/favicon.ico", get(files::favicon))
+}
 
 // Expect allowed here, as it is only called at the beginning of the program
 pub fn read_bincode(filename: &String) -> DashMap<String, String> {
@@ -57,22 +76,4 @@ pub fn get_port_tls(tls_config: &crate::structs::TlsConfig) -> u16 {
         Err(_) => tls_config.port.expect("Port not set!"),
         Ok(Err(e)) => panic!("TLS port environment variable invalid: {}", e),
     }
-}
-
-pub fn build_app() -> axum::Router {
-    Router::new()
-        .route("/", get(redirect_handler::root))
-        .route("/:path", get(redirect_handler::redirect))
-        .route("/simpleshortener/api", get(files::doc))
-        .route("/simpleshortener/api/", get(files::doc))
-        .route("/simpleshortener/api/edit/:id", patch(admin::edit))
-        .route("/simpleshortener/api/delete/:id", delete(admin::delete))
-        .route("/simpleshortener/api/add", put(admin::add))
-        .route("/simpleshortener/api/list", get(admin::list))
-        .route("/simpleshortener", get(files::panel_html))
-        .route("/simpleshortener/", get(files::panel_html))
-        .route("/simpleshortener/static/link.png", get(files::logo))
-        .route("/simpleshortener/static/font.woff", get(files::font))
-        .route("/simpleshortener/static/font.woff2", get(files::font2))
-        .route("/favicon.ico", get(files::favicon))
 }
