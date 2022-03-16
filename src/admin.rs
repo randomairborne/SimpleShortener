@@ -1,5 +1,6 @@
 use crate::db::flush_urls;
 use crate::structs::{Add, Authorization, Edit, List, Qr, WebServerError};
+use crate::utils::qrgen;
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::Json;
@@ -79,6 +80,6 @@ pub async fn qr(
         HeaderValue::from_static("image/bmp"),
     );
     tracing::debug!("Handling qr code reqeust: {}", destination);
-    let qr_bmp = qr::gen(destination)?;
+    let qr_bmp = qrgen(destination)?;
     Ok((StatusCode::OK, headers, qr_bmp))
 }

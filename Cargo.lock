@@ -568,13 +568,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "qr"
-version = "0.1.0"
-dependencies = [
- "qr_code",
-]
-
-[[package]]
 name = "qr_code"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -767,7 +760,7 @@ dependencies = [
  "hyper",
  "once_cell",
  "parking_lot",
- "qr",
+ "qr_code",
  "serde",
  "serde_json",
  "sha2",

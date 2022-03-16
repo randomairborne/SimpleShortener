@@ -24,6 +24,14 @@ pub fn build_app() -> axum::Router {
         .route("/favicon.ico", get(files::favicon))
 }
 
+pub fn qrgen(link: String) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    let qr_code = qr_code::QrCode::new(link.as_bytes())?;
+    let bmp = qr_code.to_bmp();
+    let mut bmp_vec: Vec<u8> = Vec::new();
+    bmp.write(&mut bmp_vec)?;
+    Ok(bmp_vec)
+}
+
 // Expect allowed here, as it is only called at the beginning of the program
 pub fn read_bincode(filename: &String) -> DashMap<String, String> {
     tracing::debug!("Reading bincode database file!");
