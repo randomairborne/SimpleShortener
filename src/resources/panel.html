@@ -154,6 +154,24 @@
     var username = null;
     var password = null;
     var totalUrls = 0;
+    var qrCodeWindow = null;
+
+    // base64 handling
+    const base64 = {
+        decode: s => Uint8Array.from(atob(s), c => c.charCodeAt(0)),
+        encode: b => btoa(String.fromCharCode(...new Uint8Array(b)))
+    };
+    // python-like str.format()
+    if (!String.prototype.format) {
+        String.prototype.format = function() {
+            var args = arguments;
+            return this.replace(/{(\d+)}/g, function(match, number) {
+                return typeof args[number] != 'undefined' ? args[number] : match;
+            });
+        };
+    }
+    const imageEncodedHtml = "<!DOCTYPE html><img src=\"data:image/bmp;base64,{0}\">";
+    const basicHtmlDocLayout = "data:text/html;base64,{0}";
   </script>
 
   <script>
@@ -238,6 +256,11 @@
         deleteButton.addEventListener("click", function () {deleteExisting(deleteButton)});
         deleteButton.setAttribute("class", "delete-button");
 
+        let qrCodeButton = document.createElement("button");
+        qrCodeButton.innerHTML = "Get QR code";
+        qrCodeButton.addEventListener("click", function () {openQrCode(qrCodeButton)});
+        qrCodeButton.setAttribute("class", "qr-button");
+
         let newRowElement = linksTableElement.insertRow(idx + 1);
         newRowElement.setAttribute("class", "link-row");
 
@@ -250,6 +273,7 @@
         let actionsCellElement = newRowElement.insertCell();
         actionsCellElement.appendChild(submitButton);
         actionsCellElement.appendChild(deleteButton);
+        actionsCellElement.appendChild(qrCodeButton);
         idx++;
       }
       totalUrls = idx;
@@ -309,6 +333,11 @@
       deleteButton.addEventListener("click", function () {deleteExisting(deleteButton)});
       deleteButton.setAttribute("class", "delete-button");
 
+      let qrCodeButton = document.createElement("button");
+      qrCodeButton.innerHTML = "Get QR code";
+      qrCodeButton.addEventListener("click", function () {openQrCode(qrCodeButton)});
+      qrCodeButton.setAttribute("class", "qr-button");
+
       let newRowElement = linksTableElement.insertRow(totalUrls + 1);
       newRowElement.setAttribute("class", "link-row");
 
@@ -321,6 +350,7 @@
       let actionsCellElement = newRowElement.insertCell();
       actionsCellElement.appendChild(submitButton);
       actionsCellElement.appendChild(deleteButton);
+      actionsCellElement.appendChild(qrCodeButton);
 
       totalUrls++;
     }
@@ -381,6 +411,34 @@
         linksTable.deleteRow(row.rowIndex);
         totalUrls--;
       }
+    }
+
+    async function openQrCode(element) {
+        let linksTable = document.getElementById("links-table");
+        let row = element.parentElement.parentElement;
+        let src = row.children[0].innerText;
+        let response = await fetch(
+                apiLocation + "qr/",
+                {
+                    headers: {
+                        Username: username,
+                        Password: password,
+                        "Content-Type": "application/json",
+                    },
+                    method: "DELETE",
+                    body: {"destination": src}
+                }
+        );
+        if (!response.ok) {
+            let data = await response.json();
+            alert(`Got HTTP code ${response.status}. Reason: ${data["error"] ? data["error"] : "unknown"}`);
+        }
+        let qrCode = await response.body;
+        let b64qrCode = base64.encode(qrCode);
+        let qrCodeHtml = imageEncodedHtml.format(b64qrCode);
+        let b64qrCodeHtml = base64.encode(qrCodeHtml);
+        let newWinData = basicHtmlDocLayout.format(b64qrCodeHtml);
+        window.open(newWinData);
     }
   </script>
 
