@@ -13,6 +13,7 @@
       href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap"
       rel="stylesheet"
     />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
     <style>
       body {
         text-align: center;
@@ -205,7 +206,7 @@
       username = usernameField.value;
       password = passwordField.value;
       console.log(
-        "logging in with username " + username + " and password with length" + password.length
+        "logging in with username " + username + " and password with length " + password.length
       );
 
       let response = null;
@@ -418,27 +419,22 @@
         let row = element.parentElement.parentElement;
         let src = row.children[0].innerText;
         let response = await fetch(
-                apiLocation + "qr/",
+                apiLocation + "qr",
                 {
                     headers: {
                         Username: username,
                         Password: password,
                         "Content-Type": "application/json",
                     },
-                    method: "DELETE",
-                    body: {"destination": src}
+                    method: "POST",
+                    body: JSON.stringify({"destination": src})
                 }
         );
         if (!response.ok) {
             let data = await response.json();
             alert(`Got HTTP code ${response.status}. Reason: ${data["error"] ? data["error"] : "unknown"}`);
         }
-        let qrCode = await response.body;
-        let b64qrCode = base64.encode(qrCode);
-        let qrCodeHtml = imageEncodedHtml.format(b64qrCode);
-        let b64qrCodeHtml = base64.encode(qrCodeHtml);
-        let newWinData = basicHtmlDocLayout.format(b64qrCodeHtml);
-        window.open(newWinData);
+        download(await response.blob(), "qr_code.bmp")
     }
   </script>
 
