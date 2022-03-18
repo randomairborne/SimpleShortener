@@ -1,342 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>SimpleShortener Panel</title>
-    <link
-      href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap"
-      rel="preload"
-      as="style"
-    />
-    <link
-      href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap"
-      rel="stylesheet"
-    />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
-    <style>
-      body {
-        text-align: center;
-        background: hsl(200, 4%, 10%);
-        color: #43baf4;
-        font-family: "JetBrains Mono", monospace;
-      }
 
-      input {
-        background: hsl(192, 2%, 40%);
-        border: #1b8b77;
-        color: #ffffff;
-        padding: 15px;
-        border-radius: 2px;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width" />
+  <title>SimpleShortener Panel</title>
+  <link href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap" rel="preload" as="style" />
+  <link href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+  <style>
+    body {
+      text-align: center;
+      background: hsl(200, 4%, 10%);
+      color: #43baf4;
+      font-family: "JetBrains Mono", monospace;
+    }
 
-      input::placeholder {
-        color: hsl(192, 2%, 70%);
-      }
+    input {
+      background: hsl(192, 2%, 40%);
+      border: #1b8b77;
+      color: #ffffff;
+      padding: 15px;
+      border-radius: 2px;
+    }
 
-      a {
-        color: #43baf4;
-      }
+    input::placeholder {
+      color: hsl(192, 2%, 70%);
+    }
 
-      button {
-        border: none;
-        border-radius: 5px;
-        padding: 15px;
-        color: white;
-        cursor: pointer;
-        display: inline-block;
-      }
+    a {
+      color: #43baf4;
+    }
 
-      #login-button,
-      #add-button,
-      .update-button {
-        background-color: #4caf59;
-        /* Green */
-        text-align: center;
-        text-decoration: none;
-      }
-      .qr-button {
-         background-color: #43baf4;
-        /* Blue */
-        text-align: center;
-        text-decoration: none;
-      }
-      #logout-button,
-      .delete-button {
-        background-color: #af4c4c;
-        /* Red */
-        color: white;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-      }
+    button {
+      border: none;
+      border-radius: 5px;
+      padding: 15px;
+      color: white;
+      cursor: pointer;
+      display: inline-block;
+    }
 
-      .delete-button {
-        margin-left: 0.5em;
-      }
+    #login-button,
+    #add-button,
+    .update-button {
+      background-color: #4caf59;
+      /* Green */
+      text-align: center;
+      text-decoration: none;
+    }
 
-      #links-table {
-        margin: 0 auto;
-        border-collapse: separate;
-        overflow: auto;
-      }
+    .qr-button {
+      background-color: #43baf4;
+      /* Blue */
+      text-align: center;
+      text-decoration: none;
+    }
 
-      th,
-      td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid hsl(200, 4%, 50%);
-      }
+    #logout-button,
+    .delete-button {
+      background-color: #af4c4c;
+      /* Red */
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+    }
 
-      tr {
-        transition: 0.3s;
-        border-radius: 5px;
-      }
+    .delete-button {
+      margin-left: 0.5em;
+    }
 
-      tr:last-child > td {
-        border-bottom: none;
-      }
+    #links-table {
+      margin: 0 auto;
+      border-collapse: separate;
+      overflow: auto;
+    }
 
-      tr + tr:hover {
-        background-color: hsl(200, 4%, 25%);
-      }
-    </style>
-  </head>
-  <h1>SimpleShortener Panel</h1>
-  <noscript>This panel unfortunately requires JavaScript.</noscript>
+    th,
+    td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid hsl(200, 4%, 50%);
+    }
 
-  <body>
-    <div id="login">
-      <input id="username-input" placeholder="Username" />
-      <br />
-      <input
-        id="password-input"
-        type="password"
-        placeholder="Password"
-        style="margin-top: 0.25em"
-      />
-      <br />
-      <br />
-      <button id="login-button">Login</button>
-      <div id="login-status"></div>
-    </div>
-    <div id="panel" style="display: none">
-      <div id="links-table-wrapper">
-        <table id="links-table" cellspacing="0">
-          <tr>
-            <th>Shortlink</th>
-            <th>Destination</th>
-            <th>Actions</th>
-          </tr>
-          <tr>
-            <td>
-              <input placeholder="Shortlink" id="new-link-src" size="12" />
-            </td>
-            <td>
-              <input
-                type="url"
-                placeholder="Destination"
-                id="new-link-dst"
-                size="50"
-              />
-            </td>
-            <td><button id="add-button">Add</button></td>
-          </tr>
-        </table>
-      </div>
-      <br />
-      <button id="logout-button">Log Out</button>
+    tr {
+      transition: 0.3s;
+      border-radius: 5px;
+    }
+
+    tr:last-child>td {
+      border-bottom: none;
+    }
+
+    tr+tr:hover {
+      background-color: hsl(200, 4%, 25%);
+    }
+  </style>
+</head>
+<h1>SimpleShortener Panel</h1>
+<noscript>This panel unfortunately requires JavaScript.</noscript>
+
+<body onload="onLoad()">
+  <div id="login">
+    <input id="username-input" placeholder="Username" />
+    <br />
+    <input id="password-input" type="password" placeholder="Password" style="margin-top: 0.25em" />
+    <br />
+    <br />
+    <button id="login-button">Login</button>
+    <div id="login-status"></div>
+  </div>
+  <div id="panel" style="display: none">
+    <div id="links-table-wrapper">
+      <table id="links-table" cellspacing="0">
+        <tr>
+          <th>Shortlink</th>
+          <th>Destination</th>
+          <th>Actions</th>
+        </tr>
+        <tr>
+          <td>
+            <input placeholder="Shortlink" id="new-link-src" size="12" />
+          </td>
+          <td>
+            <input type="url" placeholder="Destination" id="new-link-dst" size="50" />
+          </td>
+          <td><button id="add-button">Add</button></td>
+        </tr>
+      </table>
     </div>
     <br />
-    <a href="/simpleshortener/api/">API</a>
-  </body>
-  <script>
-    const apiLocation = window.location.protocol + "//" + window.location.host + "/simpleshortener/api/";
-    var username = null;
-    var password = null;
-    var totalUrls = 0;
-
-    // base64 handling
-    const base64 = {
-        decode: s => Uint8Array.from(atob(s), c => c.charCodeAt(0)),
-        encode: b => btoa(String.fromCharCode(...new Uint8Array(b)))
-    };
-    // python-like str.format()
-    if (!String.prototype.format) {
-        String.prototype.format = function() {
-            var args = arguments;
-            return this.replace(/{(\d+)}/g, function(match, number) {
-                return typeof args[number] != 'undefined' ? args[number] : match;
-            });
-        };
-    }
-  </script>
-
-  <script>
-    async function onLoad() {
-      let user = window.localStorage.getItem("username");
-      if (user === null) return;
-      let password = window.localStorage.getItem("password");
-      if (password === null) return;
-
-      document.getElementById("username-input").value = user;
-      document.getElementById("password-input").value = password;
-      await login();
-    }
-
-    async function logout() {
-      window.localStorage.removeItem("username");
-      window.localStorage.removeItem("password");
-
-      window.location.reload();
-    }
-
-    async function login() {
-      const statusElement = document.getElementById("login-status");
-      const loginElement = document.getElementById("login");
-      const panelElement = document.getElementById("panel");
-      const usernameField = document.getElementById("username-input");
-      const passwordField = document.getElementById("password-input");
-      const linksTableElement = document.getElementById("links-table");
-      statusElement.innerHTML = "Loading...";
-
-      username = usernameField.value;
-      password = passwordField.value;
-      console.log(
-        "logging in with username " + username + " and password with length " + password.length
-      );
-
-      let response = null;
-      try {
-        response = await fetch(apiLocation + "list", {
-          headers: { Username: username, Password: password },
-        });
-      } catch (e) {
-        statusElement.innerHTML =
-          "Failed to fetch list due to an error. Check console for more info.";
-        return;
-      }
-      let data = await response.json();
-      if (!response.ok) {
-        statusElement.innerHTML =
-          "Got HTTP code " +
-          response.status +
-          ". Reason: " +
-          (data["error"] ? data["error"] : "unknown");
-        return;
-      }
-      statusElement.innerHTML = "logged in successfully!";
-
-      window.localStorage.setItem("username", username);
-      window.localStorage.setItem("password", password);
-
-      const linkArray = data["links"];
-      let idx = 0;
-      for (const link in linkArray) {
-        let linkElement = document.createElement("label");
-        linkElement.innerText = link;
-
-        let submitButton = document.createElement("button");
-        submitButton.innerHTML = "Update";
-        submitButton.addEventListener("click", function () {updateExisting(submitButton)});
-        submitButton.setAttribute("class", "update-button");
-
-        let destElement = document.createElement("input");
-        destElement.type = "url";
-        destElement.value = linkArray[link];
-        destElement.placeholder = "Destination";
-        destElement.setAttribute("size", "50");
-        async function updateExistingKeyPressHandler(event) {if (event.key === "Enter") await updateExisting(submitButton);}
-        destElement.addEventListener("keypress", updateExistingKeyPressHandler);
-
-        let deleteButton = document.createElement("button");
-        deleteButton.innerHTML = "Delete";
-        deleteButton.addEventListener("click", function () {deleteExisting(deleteButton)});
-        deleteButton.setAttribute("class", "delete-button");
-
-        let qrCodeButton = document.createElement("button");
-        qrCodeButton.innerHTML = "Get QR code";
-        qrCodeButton.addEventListener("click", function () {openQrCode(qrCodeButton)});
-        qrCodeButton.setAttribute("class", "qr-button");
-
-        let newRowElement = linksTableElement.insertRow(idx + 1);
-        newRowElement.setAttribute("class", "link-row");
-
-        let linkCellElement = newRowElement.insertCell();
-        linkCellElement.appendChild(linkElement);
-
-        let destCellElement = newRowElement.insertCell();
-        destCellElement.appendChild(destElement);
-
-        let actionsCellElement = newRowElement.insertCell();
-        actionsCellElement.appendChild(submitButton);
-        actionsCellElement.appendChild(deleteButton);
-        actionsCellElement.appendChild(qrCodeButton);
-        idx++;
-      }
-      totalUrls = idx;
-
-      loginElement.style.display = "none";
-      panelElement.style.display = null;
-    }
-
-    async function addNew() {
-      const linksTableElement = document.getElementById("links-table");
-      const srcElement = document.getElementById("new-link-src");
-      const dstElement = document.getElementById("new-link-dst");
-      const src = srcElement.value;
-      const dst = dstElement.value;
-
-      let response = await fetch(apiLocation + "add", {
-        headers: {
-          Username: username,
-          Password: password,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ link: src, destination: dst }),
-        method: "PUT",
+    <button id="logout-button">Log Out</button>
+  </div>
+  <br />
+  <a href="/simpleshortener/api/">API</a>
+</body>
+<script>
+  const apiLocation = window.location.protocol + "//" + window.location.host + "/simpleshortener/api/";
+  var username = null;
+  var password = null;
+  var totalUrls = 0;
+  // python-like str.format()
+  if (!String.prototype.format) {
+    String.prototype.format = function () {
+      var args = arguments;
+      return this.replace(/{(\d+)}/g, function (match, number) {
+        return typeof args[number] != 'undefined' ? args[number] : match;
       });
-      if (!response.ok) {
-        let data = await response.json();
-        alert(
-          "Got HTTP code " +
-            response.status +
-            ". Reason: " +
-            (data["error"] ? data["error"] : "unknown")
-        );
-        return;
-      }
+    };
+  }
+</script>
 
-      srcElement.value = "";
-      dstElement.value = "";
+<script>
+  async function onLoad() {
+    let user = window.localStorage.getItem("username");
+    if (user === null) return;
 
+
+    document.getElementById("username-input").value = user;
+
+    await login();
+  }
+
+  async function logout() {
+    window.localStorage.removeItem("username");
+    window.localStorage.removeItem("password");
+
+    window.location.reload();
+  }
+
+  async function login() {
+    const statusElement = document.getElementById("login-status");
+    const loginElement = document.getElementById("login");
+    const panelElement = document.getElementById("panel");
+    const usernameField = document.getElementById("username-input");
+    const passwordField = document.getElementById("password-input");
+    const linksTableElement = document.getElementById("links-table");
+    statusElement.innerHTML = "Loading...";
+
+    let password = window.localStorage.getItem("password");
+    if (password === null) { password = passwordField.value }
+
+    username = usernameField.value;
+
+    console.log(
+      "logging in with username " + username + " and password with length " + password.length
+    );
+
+    let response = null;
+    try {
+      response = await fetch(apiLocation + "list", {
+        headers: { Username: username, Password: password },
+      });
+    } catch (e) {
+      statusElement.innerHTML =
+        "Failed to fetch list due to an error. Check console for more info.";
+      return;
+    }
+    let data = await response.json();
+    if (!response.ok) {
+      statusElement.innerHTML =
+        "Got HTTP code " +
+        response.status +
+        ". Reason: " +
+        (data["error"] ? data["error"] : "unknown");
+      return;
+    }
+    statusElement.innerHTML = "logged in successfully!";
+
+    window.localStorage.setItem("username", username);
+    window.localStorage.setItem("password", password);
+
+    const linkArray = data["links"];
+    let idx = 0;
+    for (const link in linkArray) {
       let linkElement = document.createElement("label");
-      linkElement.innerText = src;
+      linkElement.innerText = link;
 
       let submitButton = document.createElement("button");
       submitButton.innerHTML = "Update";
-      submitButton.addEventListener("click", function () {updateExisting(submitButton)});
+      submitButton.addEventListener("click", function () { updateExisting(submitButton) });
       submitButton.setAttribute("class", "update-button");
 
       let destElement = document.createElement("input");
       destElement.type = "url";
-      destElement.value = dst;
+      destElement.value = linkArray[link];
       destElement.placeholder = "Destination";
       destElement.setAttribute("size", "50");
-      async function updateExistingKeyPressHandler(event) {if (event.key === "Enter") await updateExisting(submitButton);}
+      async function updateExistingKeyPressHandler(event) { if (event.key === "Enter") await updateExisting(submitButton); }
       destElement.addEventListener("keypress", updateExistingKeyPressHandler);
 
       let deleteButton = document.createElement("button");
       deleteButton.innerHTML = "Delete";
-      deleteButton.addEventListener("click", function () {deleteExisting(deleteButton)});
+      deleteButton.addEventListener("click", function () { deleteExisting(deleteButton) });
       deleteButton.setAttribute("class", "delete-button");
 
       let qrCodeButton = document.createElement("button");
       qrCodeButton.innerHTML = "Get QR code";
-      qrCodeButton.addEventListener("click", function () {openQrCode(qrCodeButton)});
+      qrCodeButton.addEventListener("click", function () { openQrCode(qrCodeButton) });
       qrCodeButton.setAttribute("class", "qr-button");
 
-      let newRowElement = linksTableElement.insertRow(totalUrls + 1);
+      let newRowElement = linksTableElement.insertRow(idx + 1);
       newRowElement.setAttribute("class", "link-row");
 
       let linkCellElement = newRowElement.insertCell();
@@ -349,103 +254,181 @@
       actionsCellElement.appendChild(submitButton);
       actionsCellElement.appendChild(deleteButton);
       actionsCellElement.appendChild(qrCodeButton);
-
-      totalUrls++;
+      idx++;
     }
+    totalUrls = idx;
 
-    async function updateExisting(element) {
-      let cells = element.parentElement.parentElement.children;
-      let src = cells[0].innerText;
-      let dst = cells[1].firstElementChild.value;
-      let response = await fetch(
-        apiLocation + "edit/" + src,
-        {
-          headers: {
-            Username: username,
-            Password: password,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ destination: dst }),
-          method: "PATCH",
-        }
+    loginElement.style.display = "none";
+    panelElement.style.display = null;
+  }
+
+  async function addNew() {
+    const linksTableElement = document.getElementById("links-table");
+    const srcElement = document.getElementById("new-link-src");
+    const dstElement = document.getElementById("new-link-dst");
+    const src = srcElement.value;
+    const dst = dstElement.value;
+
+    let response = await fetch(apiLocation + "add", {
+      headers: {
+        Username: username,
+        Password: password,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ link: src, destination: dst }),
+      method: "PUT",
+    });
+    if (!response.ok) {
+      let data = await response.json();
+      alert(
+        "Got HTTP code " +
+        response.status +
+        ". Reason: " +
+        (data["error"] ? data["error"] : "unknown")
       );
-      if (!response.ok) {
-        let data = await response.json();
-        alert(
-          "Got HTTP code " +
-            response.status +
-            ". Reason: " +
-            (data["error"] ? data["error"] : "unknown")
-        );
-      } else {
-        alert("Updated URL successfully.");
-      }
+      return;
     }
 
-    async function deleteExisting(element) {
-      let linksTable = document.getElementById("links-table");
-      let row = element.parentElement.parentElement;
-      let src = row.children[0].innerText;
-      let response = await fetch(
-        apiLocation + "delete/" + src,
-        {
-          headers: {
-            Username: username,
-            Password: password,
-            "Content-Type": "application/json",
-          },
-          method: "DELETE",
-        }
+    srcElement.value = "";
+    dstElement.value = "";
+
+    let linkElement = document.createElement("label");
+    linkElement.innerText = src;
+
+    let submitButton = document.createElement("button");
+    submitButton.innerHTML = "Update";
+    submitButton.addEventListener("click", function () { updateExisting(submitButton) });
+    submitButton.setAttribute("class", "update-button");
+
+    let destElement = document.createElement("input");
+    destElement.type = "url";
+    destElement.value = dst;
+    destElement.placeholder = "Destination";
+    destElement.setAttribute("size", "50");
+    async function updateExistingKeyPressHandler(event) { if (event.key === "Enter") await updateExisting(submitButton); }
+    destElement.addEventListener("keypress", updateExistingKeyPressHandler);
+
+    let deleteButton = document.createElement("button");
+    deleteButton.innerHTML = "Delete";
+    deleteButton.addEventListener("click", function () { deleteExisting(deleteButton) });
+    deleteButton.setAttribute("class", "delete-button");
+
+    let qrCodeButton = document.createElement("button");
+    qrCodeButton.innerHTML = "Get QR code";
+    qrCodeButton.addEventListener("click", function () { openQrCode(qrCodeButton) });
+    qrCodeButton.setAttribute("class", "qr-button");
+
+    let newRowElement = linksTableElement.insertRow(totalUrls + 1);
+    newRowElement.setAttribute("class", "link-row");
+
+    let linkCellElement = newRowElement.insertCell();
+    linkCellElement.appendChild(linkElement);
+
+    let destCellElement = newRowElement.insertCell();
+    destCellElement.appendChild(destElement);
+
+    let actionsCellElement = newRowElement.insertCell();
+    actionsCellElement.appendChild(submitButton);
+    actionsCellElement.appendChild(deleteButton);
+    actionsCellElement.appendChild(qrCodeButton);
+
+    totalUrls++;
+  }
+
+  async function updateExisting(element) {
+    let cells = element.parentElement.parentElement.children;
+    let src = cells[0].innerText;
+    let dst = cells[1].firstElementChild.value;
+    let response = await fetch(
+      apiLocation + "edit/" + src,
+      {
+        headers: {
+          Username: username,
+          Password: password,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ destination: dst }),
+        method: "PATCH",
+      }
+    );
+    if (!response.ok) {
+      let data = await response.json();
+      alert(
+        "Got HTTP code " +
+        response.status +
+        ". Reason: " +
+        (data["error"] ? data["error"] : "unknown")
       );
-      if (!response.ok) {
-        let data = await response.json();
-        alert(
-          "Got HTTP code " +
-            response.status +
-            ". Reason: " +
-            (data["error"] ? data["error"] : "unknown")
-        );
-      } else {
-        linksTable.deleteRow(row.rowIndex);
-        totalUrls--;
+    } else {
+      alert("Updated URL successfully.");
+    }
+  }
+
+  async function deleteExisting(element) {
+    let linksTable = document.getElementById("links-table");
+    let row = element.parentElement.parentElement;
+    let src = row.children[0].innerText;
+    let response = await fetch(
+      apiLocation + "delete/" + src,
+      {
+        headers: {
+          Username: username,
+          Password: password,
+          "Content-Type": "application/json",
+        },
+        method: "DELETE",
       }
+    );
+    if (!response.ok) {
+      let data = await response.json();
+      alert(
+        "Got HTTP code " +
+        response.status +
+        ". Reason: " +
+        (data["error"] ? data["error"] : "unknown")
+      );
+    } else {
+      linksTable.deleteRow(row.rowIndex);
+      totalUrls--;
     }
+  }
 
-    async function openQrCode(element) {
-        let linksTable = document.getElementById("links-table");
-        let row = element.parentElement.parentElement;
-        let src = row.children[0].innerText;
-        let response = await fetch(
-                apiLocation + "qr",
-                {
-                    headers: {
-                        Username: username,
-                        Password: password,
-                        "Content-Type": "application/json",
-                    },
-                    method: "POST",
-                    body: JSON.stringify({"destination": src})
-                }
-        );
-        if (!response.ok) {
-            let data = await response.json();
-            alert(`Got HTTP code ${response.status}. Reason: ${data["error"] ? data["error"] : "unknown"}`);
-        }
-        download(await response.blob(), "qr_code.bmp")
+  async function openQrCode(element) {
+    let linksTable = document.getElementById("links-table");
+    let row = element.parentElement.parentElement;
+    let src = row.children[0].innerText;
+    let response = await fetch(
+      apiLocation + "qr",
+      {
+        headers: {
+          Username: username,
+          Password: password,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({ "destination": src })
+      }
+    );
+    if (!response.ok) {
+      let data = await response.json();
+      alert(`Got HTTP code ${response.status}. Reason: ${data["error"] ? data["error"] : "unknown"}`);
     }
-  </script>
+    download(await response.blob(), "qr_code.bmp")
+  }
+</script>
 
-  <script>
-      // register all event listeners
-      document.body.addEventListener("load", onLoad);
-      document.getElementById("login-button").addEventListener("click", login);
-      document.getElementById("add-button").addEventListener("click", addNew);
-      document.getElementById("logout-button").addEventListener("click", logout);
-      async function loginKeyPressHandler(event) {if (event.key === "Enter") await login();}
-      document.getElementById("password-input").addEventListener("keypress", loginKeyPressHandler);
-      document.getElementById("username-input").addEventListener("keypress", loginKeyPressHandler);
-      async function newLinkKeyPressHandler(event) {if (event.key === "Enter") await addNew();}
-      document.getElementById("new-link-src").addEventListener("keypress", newLinkKeyPressHandler);
-      document.getElementById("new-link-dst").addEventListener("keypress", newLinkKeyPressHandler);
-  </script>
+<script>
+  // register all event listeners
+  document.body.addEventListener("load", onLoad);
+  document.getElementById("login-button").addEventListener("click", login);
+  document.getElementById("add-button").addEventListener("click", addNew);
+  document.getElementById("logout-button").addEventListener("click", logout);
+  async function loginKeyPressHandler(event) { if (event.key === "Enter") await login(); }
+  document.getElementById("password-input").addEventListener("keypress", loginKeyPressHandler);
+  document.getElementById("username-input").addEventListener("keypress", loginKeyPressHandler);
+  async function newLinkKeyPressHandler(event) { if (event.key === "Enter") await addNew(); }
+  document.getElementById("new-link-src").addEventListener("keypress", newLinkKeyPressHandler);
+  document.getElementById("new-link-dst").addEventListener("keypress", newLinkKeyPressHandler);
+</script>
+
 </html>
