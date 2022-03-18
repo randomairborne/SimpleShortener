@@ -178,8 +178,9 @@
     const linksTableElement = document.getElementById("links-table");
     statusElement.innerHTML = "Loading...";
 
-    let password = window.localStorage.getItem("password");
-    if (password === null) { password = passwordField.value }
+    password = passwordField.value
+    if (password === "") { password = window.localStorage.getItem("password"); }
+    if (password === null) return;
 
     username = usernameField.value;
 
@@ -395,7 +396,7 @@
   async function openQrCode(element) {
     let linksTable = document.getElementById("links-table");
     let row = element.parentElement.parentElement;
-    let src = row.children[0].innerText;
+    let src = row.children[1].firstChild.value;
     let response = await fetch(
       apiLocation + "qr",
       {
