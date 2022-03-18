@@ -22,7 +22,7 @@ pub fn build_app() -> axum::Router {
         .route("/favicon.ico", get(files::favicon))
 }
 
-pub fn qrgen(link: String) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+pub fn qrgen(link: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let qr_code = qr_code::QrCode::new(link.as_bytes())?;
     let bmp = qr_code.to_bmp();
     let mut bmp_vec: Vec<u8> = Vec::new();

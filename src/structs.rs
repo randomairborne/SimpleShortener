@@ -79,7 +79,7 @@ impl From<axum::http::uri::InvalidUri> for WebServerError {
 
 impl From<Box<dyn std::error::Error>> for WebServerError {
     fn from(e: Box<dyn std::error::Error>) -> Self {
-        Self::UnknownError(Box::from(e))
+        Self::UnknownError(e)
     }
 }
 

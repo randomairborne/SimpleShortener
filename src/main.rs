@@ -1,3 +1,4 @@
+#![allow(clippy::unused_async)]
 mod admin;
 mod db;
 mod files;

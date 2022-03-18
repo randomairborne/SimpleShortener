@@ -7,7 +7,7 @@ use axum::Json;
 use hyper::header::{HeaderMap, HeaderValue};
 use std::ops::Not;
 
-static DISALLOWED_SHORTENINGS: [&'static str; 3] = ["", "favicon.ico", "simpleshortener"];
+static DISALLOWED_SHORTENINGS: [&str; 3] = ["", "favicon.ico", "simpleshortener"];
 
 pub async fn list(_: crate::structs::Authorization) -> Result<Json<List>, WebServerError> {
     Ok(Json(List {
@@ -80,6 +80,6 @@ pub async fn qr(
         HeaderValue::from_static("image/bmp"),
     );
     tracing::debug!("Handling qr code reqeust: {}", destination);
-    let qr_bmp = qrgen(destination)?;
+    let qr_bmp = qrgen(&destination)?;
     Ok((StatusCode::OK, headers, qr_bmp))
 }
