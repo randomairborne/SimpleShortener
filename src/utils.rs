@@ -19,8 +19,6 @@ pub fn build_app() -> axum::Router {
         .route("/simpleshortener", get(files::panel_html))
         .route("/simpleshortener/", get(files::panel_html))
         .route("/simpleshortener/static/link.png", get(files::logo))
-        .route("/simpleshortener/static/font.woff", get(files::font))
-        .route("/simpleshortener/static/font.woff2", get(files::font2))
         .route("/favicon.ico", get(files::favicon))
 }
 
