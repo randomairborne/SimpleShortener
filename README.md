@@ -15,7 +15,7 @@ Create this config file:
 # Port to run SimpleShortener on. Can be overridden with the `PORT` environment variable.
 port = 24529
 # Where to keep files
-database = "postgres://username:password@localhost/database"
+database = "/etc/simpleshortener/links.bincode"
 # A key:value list of username:sha256-hashed passwords
 users = { admin = "fc8252c8dc55839967c58b9ad755a59b61b67c13227ddae4bd3f78a38bf394f7" }
 
