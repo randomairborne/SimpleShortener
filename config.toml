@@ -1,13 +1,18 @@
 # Port to run SimpleShortener on. Can be overridden with the `PORT` environment variable.
 port = 24529
-# Root of the site, this might link to your company's homepage.
-root = "https://github.com/randomairborne/simpleshortener"
-# Postgres database URL.
-database = "mysql://simpleshortener:simpleshortener@localhost/simpleshortener"
+# Unix domain socket. Comment out the port and uncomment this to enable. (Defaults to socket if both are uncommented. Disables TLS.)
+# socket = "/run/simpleshortener.sock"
+# Root of the site (what you get by going to https://example.com), this might link to your company's homepage.
+root = "https://github.com/randomairborne/SimpleShortener"
+# Database path.
+database = "./links.bincode"
 # A key:value list of username:sha256-hashed passwords <default admin/admin>
 users = { admin = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"}
 
+
 # Uncomment to enable TLS
+# This also requires the TLS-enabled binary:
+# if the default binary is downloaded, TLS is entirely ignored
 # [tls]
 # port = 443
 # certfile = "/path/to/cert.pem"

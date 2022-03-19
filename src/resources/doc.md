@@ -42,3 +42,13 @@ You can edit existing links by making a `PATCH` request to `/simpleshortener/api
   "destination": "https://example.org"  
 }
 ```
+
+## Generate QR code
+
+You can generate a QR code by making a `POST` request to `/simpleshortener/api/qr` with the JSON data
+
+```json
+{
+  "destination": "https://example.net"
+}
+```

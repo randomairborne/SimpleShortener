@@ -5,20 +5,23 @@ use serde::{Deserialize, Serialize};
 use sha2::Digest;
 use std::borrow::Cow;
 
+#[cfg(feature = "tls")]
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct TLS {
+pub struct TlsConfig {
     pub certfile: String,
     pub keyfile: String,
-    pub port: u16,
+    pub port: Option<u16>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
     pub port: Option<u16>,
+    pub socket: Option<String>,
     pub root: Option<String>,
     pub database: Option<String>,
     pub users: std::collections::HashMap<String, String>,
-    pub tls: Option<TLS>,
+    #[cfg(feature = "tls")]
+    pub tls: Option<TlsConfig>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -37,6 +40,11 @@ pub struct List {
     pub links: &'static dashmap::DashMap<String, String>,
 }
 
+#[derive(Deserialize, Clone)]
+pub struct Qr {
+    pub destination: String,
+}
+
 #[derive(Debug)]
 pub enum WebServerError {
     IncorrectAuth,
@@ -46,19 +54,19 @@ pub enum WebServerError {
     UrlConflict,
     UrlDisallowed,
 
-    DbError(sqlx::Error),
+    DbError(bincode::Error),
     InvalidUri(axum::http::uri::InvalidUri),
 
-    DbNotFound,
     UrlsNotFound,
-    DisallowedNotFound,
     ConfigNotFound,
     InvalidRedirectUri,
     MissingHeaders,
+
+    UnknownError(Box<dyn std::error::Error>),
 }
 
-impl From<sqlx::Error> for WebServerError {
-    fn from(e: sqlx::Error) -> Self {
+impl From<bincode::Error> for WebServerError {
+    fn from(e: bincode::Error) -> Self {
         Self::DbError(e)
     }
 }
@@ -66,6 +74,12 @@ impl From<sqlx::Error> for WebServerError {
 impl From<axum::http::uri::InvalidUri> for WebServerError {
     fn from(e: axum::http::uri::InvalidUri) -> Self {
         Self::InvalidUri(e)
+    }
+}
+
+impl From<Box<dyn std::error::Error>> for WebServerError {
+    fn from(e: Box<dyn std::error::Error>) -> Self {
+        Self::UnknownError(e)
     }
 }
 
@@ -109,18 +123,8 @@ impl axum::response::IntoResponse for WebServerError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
-            WebServerError::DbNotFound => (
-                r#"{"error":"Database pool not found"}"#.into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
-            ),
             WebServerError::UrlsNotFound => (
                 r#"{"error":"Internal URL mapping list not found"}"#.into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
-            ),
-            WebServerError::DisallowedNotFound => (
-                r#"{"error":"Internal disallowed URL list not found"}"#.into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
@@ -143,6 +147,11 @@ impl axum::response::IntoResponse for WebServerError {
             WebServerError::UrlDisallowed => (
                 r#"{"error":"URL empty or used by the system"}"#.into(),
                 StatusCode::CONFLICT,
+                "application/json",
+            ),
+            WebServerError::UnknownError(e) => (
+                format!(r#"{{"error":"General error: {}"}}"#, e).into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
                 "application/json",
             ),
         };
@@ -190,9 +199,9 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
             .map(|x| format!("{:02x}", x))
             .collect::<String>();
         let existing_hash = config.users.get(&username).map(String::as_str);
-        tracing::debug!(
-            "Attempting to log in user {}, supplied password hash is {}, correct password hash is {}",
-            username,
+        tracing::debug!("Attempting to log in user {}", username);
+        tracing::trace!(
+            "supplied password hash is {}, correct password hash is {}",
             result,
             existing_hash.unwrap_or("(failed to get proper password hash)")
         );

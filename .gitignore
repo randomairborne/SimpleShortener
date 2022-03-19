@@ -1,4 +1,5 @@
 /target
+links.bincode
 .env
 .idea
 simpleshortener
