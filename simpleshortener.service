@@ -1,0 +1,11 @@
+[Unit]
+Description=A Simple Link Shortener
+After=network.target auditd.service
+
+[Service]
+Environment=LOG=info
+ExecStart=/bin/simpleshortener /etc/simpleshortener/config.toml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
