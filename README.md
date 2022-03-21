@@ -36,12 +36,12 @@ You can build from source with [rust](https://rust-lang.org)
 
 ### Without TLS support
 ```bash
-git clone --branch nodb https://github.com/randomairborne/SimpleShortener.git
+git clone https://github.com/randomairborne/SimpleShortener.git
 cargo build --release
 ```
 
 ### With TLS support
 ```bash
-git clone --branch nodb https://github.com/randomairborne/SimpleShortener.git
+git clone https://github.com/randomairborne/SimpleShortener.git
 cargo build --release --features tls
 ```
