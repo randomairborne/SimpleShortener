@@ -7,8 +7,6 @@ If you have any issues you can contact me on discord, `valkyrie_pilot#2707`, or 
 
 You can edit links at /simpleshortener/ on the domain you use to host it.
 
-This branch is for testing a new significant feature, do not use it in production!
-
 ## Install
 Create this config file:
 ```toml
