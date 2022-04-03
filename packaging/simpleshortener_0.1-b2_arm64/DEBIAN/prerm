@@ -1,2 +1,0 @@
-su - postgres -c 'psql -c "DROP DATABASE simpleshortener"'
-su - postgres -c 'psql -c "DROP USER simpleshortener'

@@ -1,28 +1,90 @@
+#![allow(clippy::unused_async)]
 mod admin;
+mod db;
 mod files;
 mod redirect_handler;
 mod structs;
+mod tests;
+mod utils;
 
-use axum::{routing::get, routing::post, Router};
+use crate::db::init_db_storage;
+use crate::structs::Config;
 use once_cell::sync::OnceCell;
 use std::net::SocketAddr;
 
-// OnceCell init
+/// Configuration oncecell, holds the Config struct and can easily be pulled from
 static CONFIG: OnceCell<structs::Config> = OnceCell::new();
+/// URL dashmap. This can be mutated, be careful not to do so
 static URLS: OnceCell<dashmap::DashMap<String, String>> = OnceCell::new();
-static DB: OnceCell<sqlx::Pool<sqlx::Postgres>> = OnceCell::new();
-static DISALLOWED_SHORTENINGS: OnceCell<std::collections::HashSet<String>> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
-    DISALLOWED_SHORTENINGS
-        .set(std::collections::HashSet::from([
-            String::from(""),
-            String::from("favicon.ico"),
-            String::from("simpleshortener_admin_api"),
-            String::from("simpleshortener_admin_panel"),
-        ]))
-        .expect("Failed to set disallowed shortenings");
+    let config = init();
+    let app = utils::build_app();
+    if config.socket.is_none() {
+        // Checks for a PORT environment variable
+        let port = utils::get_port(&config);
+
+        let addr = SocketAddr::from(([127, 0, 0, 1], port));
+        #[cfg(feature = "tls")]
+        if let Some(ref tls_config) = config.tls {
+            let key = std::fs::read(&tls_config.keyfile).expect("IO error on key file");
+            let cert = std::fs::read(&tls_config.certfile).expect("IO error on certificate file");
+            let tls_app = app.clone();
+            let tls_port = utils::get_port_tls(tls_config);
+            let server_tls = tokio::spawn(async move {
+                axum_server::bind_rustls(
+                    SocketAddr::from(([127, 0, 0, 1], tls_port)),
+                    axum_server::tls_rustls::RustlsConfig::from_pem(cert, key)
+                        .await
+                        .expect("Bad TLS pemfiles"),
+                )
+                .serve(tls_app.into_make_service())
+                .await
+                .expect("Failed to bind to address, is something else using the port?");
+            });
+            tracing::log::info!("listening on https://{}", addr);
+            server_tls.await.expect("Failed to await HTTPS process");
+        }
+        let server_http = tokio::spawn(async move {
+            axum::Server::bind(&addr)
+                .serve(app.into_make_service())
+                .with_graceful_shutdown(async {
+                    tokio::signal::ctrl_c()
+                        .await
+                        .expect("failed to listen for ctrl+c");
+                })
+                .await
+                .expect("Failed to bind to address, is something else using the port?");
+        });
+        tracing::log::info!("listening on http://{}", addr);
+        server_http
+            .await
+            .expect("Failed to await main HTTP process");
+    } else {
+        let socket = config.socket.expect("Socket not set?");
+        let listener = tokio::net::UnixListener::bind(&socket).expect("Failed to bind to socket");
+        let stream = tokio_stream::wrappers::UnixListenerStream::new(listener);
+        let acceptor = hyper::server::accept::from_stream(stream);
+        let server_http = tokio::spawn(async move {
+            axum::Server::builder(acceptor)
+                .serve(app.into_make_service())
+                .with_graceful_shutdown(async {
+                    tokio::signal::ctrl_c()
+                        .await
+                        .expect("failed to listen for ctrl+c");
+                })
+                .await
+                .expect("Failed to bind to address, is something else using the port?");
+        });
+        tracing::log::info!("listening on http://{}", &socket);
+        server_http
+            .await
+            .expect("Failed to await main HTTP process");
+    }
+}
+
+fn init() -> Config {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_env("LOG"))
         .init();
@@ -51,78 +113,17 @@ async fn main() {
         .map(|(_, x)| *x = x.to_lowercase())
         // consume the iterator by dropping each item in it
         .for_each(drop);
+
     CONFIG
         .set(config.clone())
         .expect("Failed to write to config OnceCell");
-
-    // Checks for a PORT environment variable
-    let database_uri = std::env::var("DATABASE_URI")
-        .unwrap_or_else(|_| config.database.expect("Database URI not set!"));
-    let pool = sqlx::postgres::PgPoolOptions::new()
-        .max_connections(2)
-        .connect(database_uri.as_str())
-        .await
-        .unwrap_or_else(|err| {
-            eprintln!("Failed to connect to database: {:#?}", err);
-            std::process::exit(3);
-        });
-
-    sqlx::migrate!()
-        .run(&pool)
-        .await
-        .expect("Failed to run migrations");
-    let urls_vec = sqlx::query!("SELECT * FROM links")
-        .fetch_all(&pool)
-        .await
-        .expect("Failed to select links from database");
-    let urls = dashmap::DashMap::with_capacity(urls_vec.len());
-    for url in urls_vec {
-        urls.insert(url.link, url.destination);
-    }
+    let database_path = config
+        .database
+        .clone()
+        .or_else(|| std::env::var("DATABASE_PATH").ok())
+        .expect("Database URI not set!");
+    let urls = utils::read_bincode(&database_path);
     URLS.set(urls).expect("Failed to set URLS OnceCell");
-    DB.set(pool).expect("Failed to set database OnceCell");
-    // build our application with a route
-    let app = Router::new()
-        .route("/", get(files::root))
-        .route("/:path", get(redirect_handler::redirect))
-        .route("/simpleshortener_admin_api", get(files::doc))
-        .route("/simpleshortener_admin_api/", get(files::doc))
-        .route(
-            "/simpleshortener_admin_api/edit",
-            post(admin::edit).patch(admin::edit),
-        )
-        .route(
-            "/simpleshortener_admin_api/delete",
-            post(admin::delete).delete(admin::delete),
-        )
-        .route("/simpleshortener_admin_api/add", post(admin::add))
-        .route("/simpleshortener_admin_api/list", get(admin::list))
-        .route("/simpleshortener_admin_panel", get(files::panelhtml))
-        .route("/simpleshortener_admin_panel/", get(files::panelhtml))
-        .route("/simpleshortener_static/link.png", get(files::logo))
-        .route("/simpleshortener_static/font.woff", get(files::font))
-        .route("/simpleshortener_static/font.woff2", get(files::font2))
-        .route("/favicon.ico", get(files::favicon));
-
-    // Checks for a PORT environment variable
-    let port = match std::env::var("PORT").map(|x| x.parse::<u16>()) {
-        Ok(Ok(port)) => port,
-        Err(_) => config.port.expect("Database URI not set!"),
-        Ok(Err(e)) => {
-            eprintln!("port environment variable invalid: {:#?}", e);
-            std::process::exit(3);
-        }
-    };
-
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
-    tracing::log::info!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .with_graceful_shutdown(async {
-            tokio::signal::ctrl_c()
-                .await
-                .expect("failed to listen for ctrl+c");
-        })
-        .await
-        .unwrap();
+    init_db_storage();
+    config
 }
