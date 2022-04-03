@@ -16,8 +16,8 @@ pub fn build_app() -> axum::Router {
         .route("/simpleshortener/api/add", put(admin::add))
         .route("/simpleshortener/api/list", get(admin::list))
         .route("/simpleshortener/api/qr", post(admin::qr))
-        .route("/simpleshortener", get(files::panel_html))
-        .route("/simpleshortener/", get(files::panel_html))
+        .route("/simpleshortener", get(files::panel))
+        .route("/simpleshortener/", get(files::panel))
         .route("/simpleshortener/static/link.png", get(files::logo))
         .route("/favicon.ico", get(files::favicon))
 }
