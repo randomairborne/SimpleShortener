@@ -11,7 +11,7 @@ mod tests {
     #[tokio::test]
     async fn root() {
         init();
-        let app = crate::utils::build_app();
+        let app = crate::app::makeapp();
 
         // `Router` implements `tower::Service<Request<Body>>` so we can
         // call it like any tower service, no need to run an HTTP server.
@@ -25,7 +25,7 @@ mod tests {
     #[tokio::test]
     async fn incorrect_auth() {
         init();
-        let app = crate::utils::build_app();
+        let app = crate::app::makeapp();
 
         let response = app
             .oneshot(

@@ -2,7 +2,7 @@ version: "3"
 
 services:
     simpleshortener:
-        image: randomairborne/simpleshortener
+        image: ghcr.io/randomairborne/simpleshortener
         restart: always
         networks:
             - simpleshortener

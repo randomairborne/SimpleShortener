@@ -1,28 +1,14 @@
 use axum::body::{boxed, Full};
 use axum::http::status::StatusCode;
+use axum::http::uri::InvalidUri;
 use axum::http::HeaderValue;
-use serde::{Deserialize, Serialize};
-use sha2::Digest;
+use qr_code::bmp_monochrome::BmpError;
+use qr_code::types::QrError;
+use serde::Deserialize;
 use std::borrow::Cow;
+use std::sync::Arc;
 
-#[cfg(feature = "tls")]
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct TlsConfig {
-    pub certfile: String,
-    pub keyfile: String,
-    pub port: Option<u16>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Config {
-    pub port: Option<u16>,
-    pub socket: Option<String>,
-    pub root: Option<String>,
-    pub database: Option<String>,
-    pub users: std::collections::HashMap<String, String>,
-    #[cfg(feature = "tls")]
-    pub tls: Option<TlsConfig>,
-}
+use crate::TokenMap;
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Add {
@@ -35,11 +21,6 @@ pub struct Edit {
     pub destination: String,
 }
 
-#[derive(Serialize, Clone, Debug)]
-pub struct List {
-    pub links: &'static dashmap::DashMap<String, String>,
-}
-
 #[derive(Deserialize, Clone)]
 pub struct Qr {
     pub destination: String,
@@ -50,24 +31,22 @@ pub enum WebServerError {
     IncorrectAuth,
     BadRequest,
     NotFound,
-    NotFoundJson,
     UrlConflict,
     UrlDisallowed,
 
-    DbError(bincode::Error),
-    InvalidUri(axum::http::uri::InvalidUri),
+    Db(sqlx::Error),
+    InvalidUri(InvalidUri),
+    Bmp(BmpError),
+    Qr(QrError),
 
-    UrlsNotFound,
-    ConfigNotFound,
     InvalidRedirectUri,
     MissingHeaders,
-
-    UnknownError(Box<dyn std::error::Error>),
+    MissingExtensions,
 }
 
-impl From<bincode::Error> for WebServerError {
-    fn from(e: bincode::Error) -> Self {
-        Self::DbError(e)
+impl From<sqlx::Error> for WebServerError {
+    fn from(e: sqlx::Error) -> Self {
+        Self::Db(e)
     }
 }
 
@@ -77,89 +56,74 @@ impl From<axum::http::uri::InvalidUri> for WebServerError {
     }
 }
 
-impl From<Box<dyn std::error::Error>> for WebServerError {
-    fn from(e: Box<dyn std::error::Error>) -> Self {
-        Self::UnknownError(e)
+impl From<BmpError> for WebServerError {
+    fn from(e: BmpError) -> Self {
+        Self::Bmp(e)
+    }
+}
+
+impl From<QrError> for WebServerError {
+    fn from(e: QrError) -> Self {
+        Self::Qr(e)
     }
 }
 
 impl axum::response::IntoResponse for WebServerError {
     fn into_response(self) -> axum::response::Response {
         tracing::error!("handling error: {:#?}", self);
-        let (body, status, content_type): (Cow<str>, StatusCode, &'static str) = match self {
-            WebServerError::IncorrectAuth => (
-                r#"{"error":"Authentication failed"}"#.into(),
-                StatusCode::UNAUTHORIZED,
-                "application/json",
-            ),
+        let (error, status): (Cow<str>, StatusCode) = match self {
+            WebServerError::IncorrectAuth => {
+                ("Authentication failed".into(), StatusCode::UNAUTHORIZED)
+            }
             WebServerError::BadRequest => (
-                r#"{"error":"Missing header or malformed json"}"#.into(),
+                "Missing header or malformed json".into(),
                 StatusCode::BAD_REQUEST,
-                "application/json",
             ),
-            WebServerError::NotFound => (
-                include_str!("resources/404.html").into(),
-                StatusCode::NOT_FOUND,
-                "text/html",
-            ),
-            WebServerError::NotFoundJson => (
-                r#"{"error":"Link not found"}"#.into(),
-                StatusCode::NOT_FOUND,
-                "application/json",
-            ),
+            WebServerError::NotFound => ("Link not found".into(), StatusCode::NOT_FOUND),
             WebServerError::UrlConflict => (
-                r#"{"error":"Short URL conflicts with already-existing url, try editing instead"}"#
-                    .into(),
+                "Short URL conflicts with already-existing url, try editing instead".into(),
                 StatusCode::CONFLICT,
-                "application/json",
             ),
-            WebServerError::DbError(e) => (
-                format!(r#"{{"error":"Database returned an error: {:?}"}}"#, e).into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
-            ),
-            WebServerError::InvalidUri(e) => (
-                format!(r#"{{"error":"The redirect URI is invalid: {}"}}"#, e).into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
-            ),
-            WebServerError::UrlsNotFound => (
-                r#"{"error":"Internal URL mapping list not found"}"#.into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
-            ),
-            WebServerError::ConfigNotFound => (
-                r#"{"error":"Internal config not found"}"#.into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
-            ),
+
             WebServerError::MissingHeaders => (
-                r#"{"error":"another extractor took headers"}"#.into(),
+                "another extractor took headers".into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
             ),
             WebServerError::InvalidRedirectUri => (
-                r#"{"error":"database returned invalid header"}"#.into(),
+                "database returned invalid header".into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
             ),
 
             WebServerError::UrlDisallowed => (
-                r#"{"error":"URL empty or used by the system"}"#.into(),
+                "URL empty or used by the system".into(),
                 StatusCode::CONFLICT,
-                "application/json",
             ),
-            WebServerError::UnknownError(e) => (
-                format!(r#"{{"error":"General error: {}"}}"#, e).into(),
+            WebServerError::MissingExtensions => (
+                "Missing internal request extension(s)".into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "application/json",
+            ),
+            WebServerError::Db(e) => (
+                format!("Database returned an error: {:?}", e).into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+            WebServerError::InvalidUri(e) => (
+                format!("The redirect URI is invalid: {:?}", e).into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+            WebServerError::Bmp(e) => (
+                format!("BMP conversion error: {:?}", e).into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+            WebServerError::Qr(e) => (
+                format!("QR creation error: {:?}", e).into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
             ),
         };
-
+        let body = json!({ "error": error }).to_string();
         axum::response::Response::builder()
             .header(
                 axum::http::header::CONTENT_TYPE,
-                HeaderValue::from_static(content_type),
+                HeaderValue::from_static("application/json"),
             )
             .status(status)
             .body(boxed(Full::from(body)))
@@ -176,37 +140,20 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
         req: &mut axum::extract::RequestParts<T>,
     ) -> Result<Self, Self::Rejection> {
         let headers = req.headers().ok_or(WebServerError::MissingHeaders)?;
-
-        let username = String::from_utf8(
+        let provided_token = String::from_utf8(
             headers
-                .get("username")
+                .get("Authorization")
                 .ok_or(WebServerError::BadRequest)?
                 .as_bytes()
                 .into(),
         )
         .map_err(|_| WebServerError::BadRequest)?;
-        let password = String::from_utf8(
-            headers
-                .get("password")
-                .ok_or(WebServerError::BadRequest)?
-                .as_bytes()
-                .into(),
-        )
-        .map_err(|_| WebServerError::BadRequest)?;
-        let config = crate::CONFIG.get().ok_or(WebServerError::ConfigNotFound)?;
-        let result = sha2::Sha256::digest(password)
-            .into_iter()
-            .map(|x| format!("{:02x}", x))
-            .collect::<String>();
-        let existing_hash = config.users.get(&username).map(String::as_str);
-        tracing::debug!("Attempting to log in user {}", username);
-        tracing::trace!(
-            "supplied password hash is {}, correct password hash is {}",
-            result,
-            existing_hash.unwrap_or("(failed to get proper password hash)")
-        );
-
-        if existing_hash.map_or(false, |user| user == result) {
+        let tokens = req
+            .extensions()
+            .ok_or(WebServerError::MissingExtensions)?
+            .get::<Arc<TokenMap>>()
+            .ok_or(WebServerError::MissingExtensions)?;
+        if tokens.get(&provided_token).is_some() {
             Ok(Self)
         } else {
             Err(WebServerError::IncorrectAuth)
