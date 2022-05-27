@@ -6,6 +6,7 @@ use axum::http::StatusCode;
 use axum::Json;
 use rand::Rng;
 use serde_json::Value;
+use sha2::Digest;
 use sqlx::PgPool;
 use std::ops::Not;
 
@@ -107,8 +108,26 @@ pub async fn token(
             .into(),
     )
     .map_err(|_| WebServerError::BadRequest)?;
-    let user = query!("SELECT username, password FROM accounts WHERE username = $1", username).fetch_one(&db).await?;
-    tokio::task::spawn_blocking(f)
+    let correct = match query!(
+        "SELECT password FROM accounts WHERE username = $1",
+        &username
+    )
+    .fetch_one(&db)
+    .await
+    {
+        Ok(pw) => pw,
+        Err(sqlx::Error::RowNotFound) => {
+            return Ok(Json(json!({ "error": "Username or password incorrect!" })))
+        }
+        Err(e) => return Err(WebServerError::Db(e)),
+    };
+    let provided_password = sha2::Sha512::digest(&password)
+        .into_iter()
+        .map(|x| format!("{:02x}", x))
+        .collect::<String>();
+    if correct.password == provided_password {
+        return Ok(Json(json!({ "error": "Username or password incorrect!" })));
+    };
     let chars: Vec<char> = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz."
         .chars()
         .collect();
@@ -121,6 +140,7 @@ pub async fn token(
                 .ok_or(WebServerError::NotFound)?,
         );
     }
+    tokens.insert(username, password);
     Ok(Json(json!({ "token": token })))
 }
 
