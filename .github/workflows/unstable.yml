@@ -1,9 +1,9 @@
 
-name: Build Production
+name: Build Unstable
 on:
   push:
     branches:
-      - production
+      - master
   workflow_dispatch:
 
 jobs:
