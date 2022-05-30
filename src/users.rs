@@ -1,12 +1,11 @@
 use axum::http::HeaderMap;
-use axum::{Extension, Json};
+use axum::Json;
+use dashmap::DashMap;
 use serde_json::Value;
 use sha2::Digest;
-use sqlx::PgPool;
 
 use crate::error::WebServerError;
 use crate::structs::AddUser;
-use crate::{TokenMap, UrlMap};
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 pub struct Authorization;
@@ -28,8 +27,10 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
         .map_err(|_| WebServerError::BadRequest)?;
         let tokens = req
             .extensions()
-            .get::<Arc<TokenMap>>()
+            .get::<Arc<DashMap<String, String>>>()
             .ok_or(WebServerError::MissingExtensions)?;
+
+        trace!("Tokens: {:?}", &tokens);
         if tokens.get(&provided_token).is_some() {
             Ok(Self)
         } else {
@@ -39,11 +40,7 @@ impl<T: Send> axum::extract::FromRequest<T> for Authorization {
 }
 
 #[allow(clippy::unused_async)]
-pub async fn token(
-    headers: HeaderMap,
-    Extension(db): Extension<PgPool>,
-    Extension(tokens): Extension<UrlMap>,
-) -> Result<Json<Value>, WebServerError> {
+pub async fn token(headers: HeaderMap, state: crate::State) -> Result<Json<Value>, WebServerError> {
     let username = String::from_utf8(
         headers
             .get("username")
@@ -64,7 +61,7 @@ pub async fn token(
         "SELECT password FROM accounts WHERE username = $1",
         &username
     )
-    .fetch_one(&db)
+    .fetch_one(&state.db)
     .await
     {
         Ok(pw) => pw,
@@ -84,15 +81,13 @@ pub async fn token(
         return Ok(Json(json!({ "error": "Username or password incorrect!" })));
     };
     let token = crate::randstr();
-    tokens.insert(username, token.clone());
+    state.tokens.insert(username, token.clone());
     Ok(Json(json!({ "token": token })))
 }
 
 pub async fn setup(
-    _: Authorization,
     Json(AddUser { username, password }): Json<AddUser>,
-    Extension(db): Extension<&PgPool>,
-    axum::Extension(is_init): axum::Extension<crate::IsInit>,
+    state: crate::State,
 ) -> Result<Json<Value>, WebServerError> {
     let salt = crate::randstr();
     let password_hash = sha2::Sha512::digest(&format!("{}|{}", &salt, password))
@@ -100,14 +95,17 @@ pub async fn setup(
         .map(|x| format!("{:02x}", x))
         .collect::<String>();
 
-    debug!("Creating new user with username {} and password hash `{}|{}`", &username, &salt, &password_hash);
+    debug!(
+        "Creating new user with username {} and password hash `{}|{}`",
+        &username, &salt, &password_hash
+    );
     query!(
         "INSERT INTO accounts VALUES ($1, $2)",
         username,
         &format!("{}|{}", &salt, password_hash)
     )
-    .execute(db)
+    .execute(&state.db)
     .await?;
-    is_init.store(true, Ordering::Relaxed);
+    state.is_init.store(true, Ordering::Relaxed);
     Ok(Json(json!({"message":"Account added!"})))
 }

@@ -137,6 +137,7 @@
 </body>
 <script>
   const apiLocation = window.location.protocol + "//" + window.location.host + "/simpleshortener/api/";
+  var token = null;
   var username = null;
   var password = null;
   var totalUrls = 0;
@@ -156,7 +157,6 @@
     let user = window.localStorage.getItem("username");
     if (user === null) return;
 
-
     document.getElementById("username-input").value = user;
 
     await login();
@@ -171,11 +171,8 @@
 
   async function login() {
     const statusElement = document.getElementById("login-status");
-    const loginElement = document.getElementById("login");
-    const panelElement = document.getElementById("panel");
     const usernameField = document.getElementById("username-input");
     const passwordField = document.getElementById("password-input");
-    const linksTableElement = document.getElementById("links-table");
     statusElement.innerHTML = "Loading...";
 
     password = passwordField.value
@@ -190,12 +187,13 @@
 
     let response = null;
     try {
-      response = await fetch(apiLocation + "list", {
-        headers: { Username: username, Password: password },
+      response = await fetch(apiLocation + "token", {
+        method: 'POST',
+        headers: { username: username, password: password },
       });
     } catch (e) {
       statusElement.innerHTML =
-        "Failed to fetch list due to an error. Check console for more info.";
+        "Failed to get token due to an error. Check console for more info.";
       return;
     }
     let data = await response.json();
@@ -208,10 +206,36 @@
       return;
     }
     statusElement.innerHTML = "logged in successfully!";
+    token = data['token'];
+    await populateLinks();
+  };
 
-    window.localStorage.setItem("username", username);
-    window.localStorage.setItem("password", password);
 
+  async function populateLinks() {
+    const linksTableElement = document.getElementById("links-table");
+    const statusElement = document.getElementById("login-status");
+    const loginElement = document.getElementById("login");
+    const panelElement = document.getElementById("panel");
+    console.log(token);
+    let response = null;
+    try {
+      response = await fetch(apiLocation + "list", {
+        headers: { "Authorization": token },
+      });
+    } catch (e) {
+      statusElement.innerHTML =
+        "Failed to get links due to an error. Check console for more info.";
+      return;
+    }
+    let data = await response.json();
+    if (!response.ok) {
+      statusElement.innerHTML =
+        "Got HTTP code " +
+        response.status +
+        ". Reason: " +
+        (data["error"] ? data["error"] : "unknown");
+      return;
+    }
     const linkArray = data["links"];
     let idx = 0;
     for (const link in linkArray) {
@@ -271,8 +295,7 @@
 
     let response = await fetch(apiLocation + "add", {
       headers: {
-        Username: username,
-        Password: password,
+        "Authorization": token,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ link: src, destination: dst }),
@@ -343,8 +366,7 @@
       apiLocation + "edit/" + src,
       {
         headers: {
-          Username: username,
-          Password: password,
+          "Authorization": token,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ destination: dst }),
@@ -372,8 +394,7 @@
       apiLocation + "delete/" + src,
       {
         headers: {
-          Username: username,
-          Password: password,
+          "Authorization": token,
           "Content-Type": "application/json",
         },
         method: "DELETE",
@@ -401,8 +422,7 @@
       apiLocation + "qr",
       {
         headers: {
-          Username: username,
-          Password: password,
+          "Authorization": token,
           "Content-Type": "application/json",
         },
         method: "POST",

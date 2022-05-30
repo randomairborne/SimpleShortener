@@ -10,6 +10,7 @@ use std::sync::{atomic::AtomicBool, Arc};
 
 use dashmap::DashMap;
 use rand::Rng;
+use sqlx::PgPool;
 
 #[macro_use]
 extern crate sqlx;
@@ -39,7 +40,7 @@ async fn main() {
         .fetch_all(&db)
         .await
         .expect("Failed to select from URLs");
-    let urls: UrlMap = DashMap::new();
+    let urls: DashMap<String, String> = DashMap::new();
     for pair in urls_mangled {
         urls.insert(pair.link, pair.destination);
     }
@@ -47,13 +48,18 @@ async fn main() {
         .fetch_one(&db)
         .await
         .is_ok();
+    let tokens: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
     println!("[SimpleShortener] Listening on http://broadcasthost:8080");
     axum::Server::bind(&([0, 0, 0, 0], 8080).into())
         .serve(
             app::makeapp(
-                Arc::new(db),
-                Arc::new(urls),
-                Arc::new(AtomicBool::from(is_init)),
+                tokens,
+                Arc::new(AppState {
+                    db,
+                    tokens: Arc::new(DashMap::new()),
+                    urls: Arc::new(urls),
+                    is_init: Arc::new(AtomicBool::from(is_init)),
+                }),
             )
             .into_make_service(),
         )
@@ -61,9 +67,6 @@ async fn main() {
         .expect("Failed to await main HTTP process");
 }
 
-pub type UrlMap = DashMap<String, String>;
-pub type TokenMap = DashMap<String, String>;
-pub type IsInit = Arc<AtomicBool>;
 #[must_use]
 pub fn randstr() -> String {
     let chars: Vec<char> = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz."
@@ -75,4 +78,15 @@ pub fn randstr() -> String {
         result.push(*chars.get(rng.gen_range(0..chars.len())).unwrap_or(&'.'));
     }
     result
+}
+
+type IsInit = Arc<AtomicBool>;
+type State = Arc<AppState>;
+
+#[derive(Debug, Clone)]
+struct AppState {
+    pub db: PgPool,
+    pub urls: Arc<DashMap<String, String>>,
+    pub tokens: Arc<DashMap<String, String>>,
+    pub is_init: IsInit,
 }

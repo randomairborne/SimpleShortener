@@ -1,13 +1,13 @@
 use crate::error::WebServerError;
-use crate::UrlMap;
-use axum::extract::{Extension, Path};
+use crate::State;
+use axum::extract::Path;
 use axum::http::header::CONTENT_TYPE;
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 
 #[allow(clippy::unused_async)]
 pub async fn redirect(
     Path(mut path): Path<String>,
-    Extension(links): Extension<UrlMap>,
+    state: State,
 ) -> Result<(StatusCode, HeaderMap, &'static str), WebServerError> {
     path = path.to_lowercase();
     let mut headers = HeaderMap::new();
@@ -15,11 +15,11 @@ pub async fn redirect(
         CONTENT_TYPE,
         HeaderValue::from_static("text/html; charset=utf-8"),
     );
-    let destination_url = match links.get(&path) {
+    let destination_url = match state.urls.get(&path) {
         Some(dest) => dest,
         None => return Ok((StatusCode::OK, headers, include_str!("resources/404.html"))),
     };
-    tracing::debug!("Path: {}, Destination: {}", path, destination_url.as_str());
+    debug!("Path: {}, Destination: {}", path, destination_url.as_str());
     let destination = match HeaderValue::from_str(destination_url.as_str()) {
         Ok(dest) => dest,
         Err(_) => return Err(WebServerError::InvalidRedirectUri),
@@ -30,12 +30,10 @@ pub async fn redirect(
 
 // Checks if a specific config var exists or serves the default root
 #[allow(clippy::unused_async)]
-pub async fn root(
-    Extension(links): Extension<UrlMap>,
-) -> Result<(StatusCode, HeaderMap, &'static str), WebServerError> {
-    tracing::debug!("Handling root request");
+pub async fn root(state: State) -> Result<(StatusCode, HeaderMap, &'static str), WebServerError> {
+    debug!("Handling root request");
     let mut headers = HeaderMap::new();
-    match links.get("/") {
+    match state.urls.get("/") {
         None => {
             headers.insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
             Ok((StatusCode::OK, headers, include_str!("resources/root.html")))

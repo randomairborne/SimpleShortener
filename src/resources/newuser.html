@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>SimpleShortener Panel</title>
+    <title>SimpleShortener Panel Setup</title>
     <link href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap" rel="preload" as="style" />
     <link href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap" rel="stylesheet" />
     <style>
@@ -97,7 +97,7 @@
         }
     </style>
 </head>
-<h1>SimpleShortener Panel</h1>
+<h1>SimpleShortener Panel Setup</h1>
 <noscript>This panel unfortunately requires JavaScript.</noscript>
 
 <body>
@@ -115,14 +115,18 @@
 </body>
 <script>
     function createAccount() {
+        console.log("Stuff is happening");
         let username = document.getElementById('username-input').value;
         let password = document.getElementById('password-input').value;
-        fetch(window.location.protocol + "//" + window.location.host + "/simpleshortener/api/create", {
+        let data = JSON.stringify({ "username": username, "password": password });
+        fetch("/simpleshortener/api/create", {
             method: 'POST',
-            body: JSON.stringify({ "username": username, "password": password })
+            body: data,
+            headers: {'Content-Type': 'application/json'}
         })
-            .then(_ => { window.location.replace(window.location.protocol + "//" + window.location.host + "/simpleshortener/") })
-            .then(_ => _);
+            .then(response => response.text())
+            .then(data => console.log(data));
+        window.location.reload();
     }
 </script>
 

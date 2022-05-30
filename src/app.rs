@@ -1,30 +1,52 @@
-use crate::{admin, files, redirect_handler, users, UrlMap};
-use axum::extract::Extension;
-use axum::routing::{delete, get, patch, post, put, Router};
-use dashmap::DashMap;
-use sqlx::PgPool;
 use std::sync::Arc;
 
-pub fn makeapp(db: Arc<PgPool>, urls: Arc<UrlMap>, is_init: crate::IsInit) -> Router {
-    let authtokens: UrlMap = DashMap::new();
+use crate::{admin, files, redirect_handler, users};
+use axum::{
+    routing::{delete, get, patch, post, put, Router},
+    Extension,
+};
+use dashmap::DashMap;
+
+pub fn makeapp(tokens: Arc<DashMap<String, String>>, state: crate::State) -> Router {
     Router::new()
-        .route("/", get(redirect_handler::root))
-        .route("/:path", get(redirect_handler::redirect))
+        .route("/", get(move || redirect_handler::root(state.clone())))
+        .route(
+            "/:path",
+            get({Arc::clone(&state);move |path| redirect_handler::redirect(path, state)}),
+        )
         .route("/simpleshortener/api", get(files::doc))
         .route("/simpleshortener/api/", get(files::doc))
-        .route("/simpleshortener/api/edit/:id", patch(admin::edit))
-        .route("/simpleshortener/api/delete/:id", delete(admin::delete))
-        .route("/simpleshortener/api/add", put(admin::add))
-        .route("/simpleshortener/api/list", get(admin::list))
-        .route("/simpleshortener/api/qr", post(admin::qr))
-        .route("/simpleshortener/api/token", post(users::token))
-        .route("/simpleshortener/api/create", post(users::setup))
-        .route("/simpleshortener", get(files::panel))
-        .route("/simpleshortener/", get(files::panel))
+        .route(
+            "/simpleshortener/api/edit/:id",
+            patch(move |auth, path, json| admin::edit(auth, path, json, state)),
+        )
+        .route(
+            "/simpleshortener/api/delete/:id",
+            delete(move |auth, path| admin::delete(auth, path, state)),
+        )
+        .route(
+            "/simpleshortener/api/add",
+            put(move |auth, json| admin::add(auth, json, state)),
+        )
+        .route(
+            "/simpleshortener/api/list",
+            get(move |auth| admin::list(auth, state)),
+        )
+        .route("/simpleshortener/api/qr", post(move |json| admin::generate_qr(json)))
+        .route(
+            "/simpleshortener/api/token",
+            post(move |headers| users::token(headers, state)),
+        )
+        .route(
+            "/simpleshortener/api/create",
+            post(move |json| users::setup(json, state)),
+        )
+        .route("/simpleshortener", get(move || files::panel(state.is_init)))
+        .route(
+            "/simpleshortener/",
+            get(move || files::panel(state.is_init)),
+        )
         .route("/simpleshortener/static/link.png", get(files::logo))
         .route("/favicon.ico", get(files::favicon))
-        .layer(Extension(urls))
-        .layer(Extension(db))
-        .layer(Extension(authtokens))
-        .layer(Extension(is_init))
+        .layer(Extension(tokens))
 }

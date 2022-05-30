@@ -1,17 +1,15 @@
-use crate::static_file;
-
 // basic handler that responds with a static string
-static_file!(doc, "resources/doc.html", "text/html");
+crate::static_file!(doc, "resources/doc.html", "text/html");
 
 // basic handler that responds with a static icon file
-static_file!(favicon, "resources/favicon.ico", "image/x-icon");
+crate::static_file!(favicon, "resources/favicon.ico", "image/x-icon");
 
 // basic handler that responds with a static png file
-static_file!(logo, "resources/logo.png", "image/png");
+crate::static_file!(logo, "resources/logo.png", "image/png");
 
 #[allow(clippy::unused_async)]
 pub async fn panel(
-    axum::Extension(is_init): axum::Extension<crate::IsInit>,
+    is_init: crate::IsInit,
 ) -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
