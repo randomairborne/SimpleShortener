@@ -6,6 +6,5 @@ CREATE TABLE urls (
 
 CREATE TABLE accounts (
     username VARCHAR(64) UNIQUE NOT NULL,
-    password VARCHAR(1024) NOT NULL,
-    admin BIT
+    password VARCHAR(1024) NOT NULL
 );

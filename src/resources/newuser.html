@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>SimpleShortener Panel</title>
+    <link href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap" rel="preload" as="style" />
+    <link href="https://fonts.googleapis.com/css?family=JetBrains+Mono&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            text-align: center;
+            background: hsl(200, 4%, 10%);
+            color: #43baf4;
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        input {
+            background: hsl(192, 2%, 40%);
+            border: #1b8b77;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 2px;
+        }
+
+        input::placeholder {
+            color: hsl(192, 2%, 70%);
+        }
+
+        a {
+            color: #43baf4;
+        }
+
+        button {
+            border: none;
+            border-radius: 5px;
+            padding: 15px;
+            color: white;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        #login-button,
+        #add-button,
+        .update-button {
+            background-color: #4caf59;
+            /* Green */
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .qr-button {
+            background-color: #43baf4;
+            /* Blue */
+            text-align: center;
+            text-decoration: none;
+        }
+
+        #logout-button,
+        .delete-button {
+            background-color: #af4c4c;
+            /* Red */
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .delete-button {
+            margin-left: 0.5em;
+        }
+
+        #links-table {
+            margin: 0 auto;
+            border-collapse: separate;
+            overflow: auto;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid hsl(200, 4%, 50%);
+        }
+
+        tr {
+            transition: 0.3s;
+            border-radius: 5px;
+        }
+
+        tr:last-child>td {
+            border-bottom: none;
+        }
+
+        tr+tr:hover {
+            background-color: hsl(200, 4%, 25%);
+        }
+    </style>
+</head>
+<h1>SimpleShortener Panel</h1>
+<noscript>This panel unfortunately requires JavaScript.</noscript>
+
+<body>
+    <div id="login">
+        <input id="username-input" placeholder="New username" />
+        <br />
+        <input id="password-input" type="password" placeholder="New password" style="margin-top: 0.25em" />
+        <br />
+        <br />
+        <button id="login-button" onclick="createAccount()">Login</button>
+        <div id="login-status"></div>
+    </div>
+    <br />
+    <a href="/simpleshortener/api/">API</a>
+</body>
+<script>
+    function createAccount() {
+        let username = document.getElementById('username-input').value;
+        let password = document.getElementById('password-input').value;
+        fetch(window.location.protocol + "//" + window.location.host + "/simpleshortener/api/create", {
+            method: 'POST',
+            body: JSON.stringify({ "username": username, "password": password })
+        })
+            .then(_ => { window.location.replace(window.location.protocol + "//" + window.location.host + "/simpleshortener/") })
+            .then(_ => _);
+    }
+</script>
+
+</html>

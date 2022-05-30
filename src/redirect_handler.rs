@@ -1,4 +1,4 @@
-use crate::structs::WebServerError;
+use crate::error::WebServerError;
 use crate::UrlMap;
 use axum::extract::{Extension, Path};
 use axum::http::header::CONTENT_TYPE;

@@ -1,22 +1,18 @@
-use crate::structs::{Add, Authorization, Edit, Qr, WebServerError};
+use crate::error::WebServerError;
+use crate::structs::{Add, Edit, Qr};
+use crate::users::Authorization;
 use crate::UrlMap;
 use axum::extract::{Extension, Path};
 use axum::http::header::{HeaderMap, HeaderValue};
 use axum::http::StatusCode;
 use axum::Json;
-use rand::Rng;
 use serde_json::Value;
-use sha2::Digest;
 use sqlx::PgPool;
-use std::ops::Not;
 
 static DISALLOWED_SHORTENINGS: [&str; 3] = ["", "favicon.ico", "simpleshortener"];
 
 #[allow(clippy::unused_async)]
-pub async fn list(
-    _: crate::structs::Authorization,
-    Extension(links): Extension<UrlMap>,
-) -> Json<Value> {
+pub async fn list(_: Authorization, Extension(links): Extension<UrlMap>) -> Json<Value> {
     Json(json!({ "links": links }))
 }
 
@@ -73,9 +69,7 @@ pub async fn add(
         .then(|| ())
         .ok_or(WebServerError::UrlConflict)?;
 
-    DISALLOWED_SHORTENINGS
-        .contains(&link.as_str())
-        .not()
+    (!DISALLOWED_SHORTENINGS.contains(&link.as_str()))
         .then(|| ())
         .ok_or(WebServerError::UrlDisallowed)?;
     query!("INSERT INTO urls VALUES ($1, $2)", link, destination)
@@ -84,64 +78,6 @@ pub async fn add(
 
     links.insert(link, destination);
     Ok(Json(json!({"message":"Link added!"})))
-}
-
-#[allow(clippy::unused_async)]
-pub async fn token(
-    headers: HeaderMap,
-    Extension(db): Extension<PgPool>,
-    Extension(tokens): Extension<UrlMap>,
-) -> Result<Json<Value>, WebServerError> {
-    let username = String::from_utf8(
-        headers
-            .get("username")
-            .ok_or(WebServerError::BadRequest)?
-            .as_bytes()
-            .into(),
-    )
-    .map_err(|_| WebServerError::BadRequest)?;
-    let password = String::from_utf8(
-        headers
-            .get("password")
-            .ok_or(WebServerError::BadRequest)?
-            .as_bytes()
-            .into(),
-    )
-    .map_err(|_| WebServerError::BadRequest)?;
-    let correct = match query!(
-        "SELECT password FROM accounts WHERE username = $1",
-        &username
-    )
-    .fetch_one(&db)
-    .await
-    {
-        Ok(pw) => pw,
-        Err(sqlx::Error::RowNotFound) => {
-            return Ok(Json(json!({ "error": "Username or password incorrect!" })))
-        }
-        Err(e) => return Err(WebServerError::Db(e)),
-    };
-    let provided_password = sha2::Sha512::digest(&password)
-        .into_iter()
-        .map(|x| format!("{:02x}", x))
-        .collect::<String>();
-    if correct.password == provided_password {
-        return Ok(Json(json!({ "error": "Username or password incorrect!" })));
-    };
-    let chars: Vec<char> = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz."
-        .chars()
-        .collect();
-    let mut token = String::with_capacity(64);
-    let mut rng = rand::thread_rng();
-    for _ in 0..64 {
-        token.push(
-            *chars
-                .get(rng.gen_range(0..chars.len()))
-                .ok_or(WebServerError::NotFound)?,
-        );
-    }
-    tokens.insert(username, password);
-    Ok(Json(json!({ "token": token })))
 }
 
 #[allow(clippy::unused_async)]
