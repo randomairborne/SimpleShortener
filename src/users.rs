@@ -35,17 +35,12 @@ pub async fn token(
         Err(e) => return Err(WebServerError::Db(e)),
     };
     let correct_split = correct_with_salt.password.split('|').collect::<Vec<&str>>();
-    println!("{:#?}", &correct_split);
     let correct_hash = correct_split.get(1).ok_or(WebServerError::NoSalt)?;
     let salt = correct_split.get(0).ok_or(WebServerError::NoSalt)?;
     let provided_password_hash = sha2::Sha512::digest(&format!("{}|{}", salt, password))
         .into_iter()
         .map(|x| format!("{:02x}", x))
         .collect::<String>();
-    println!(
-        "Correct hash: {}|\nProvided hash: {}|",
-        *correct_hash, provided_password_hash
-    );
     if *correct_hash != provided_password_hash {
         return Err(WebServerError::InvalidUsernameOrPassword);
     };
@@ -59,7 +54,6 @@ pub async fn setup(
     state: crate::State,
 ) -> Result<Json<Value>, WebServerError> {
     let salt = crate::randstr();
-    trace!("{}", &salt);
     let password_hash = sha2::Sha512::digest(&format!("{}|{}", &salt, password))
         .into_iter()
         .map(|x| format!("{:02x}", x))

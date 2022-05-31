@@ -18,6 +18,7 @@ WORKDIR /
 COPY --from=build /simpleshortener/target/release/simpleshortener .
 
 USER 9999
-EXPOSE 3000
+EXPOSE 8080
+ENV log=warn
 
 CMD ["./simpleshortener"]
