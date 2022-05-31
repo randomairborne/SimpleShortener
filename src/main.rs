@@ -7,7 +7,7 @@ mod redirect_handler;
 mod structs;
 mod users;
 
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use rand::Rng;
 use sqlx::PgPool;
 use std::sync::{atomic::AtomicBool, Arc};
@@ -53,7 +53,7 @@ async fn main() {
         .serve(
             app::makeapp(Arc::new(AppState {
                 db,
-                tokens: Arc::new(DashMap::new()),
+                tokens: Arc::new(DashSet::new()),
                 urls: Arc::new(urls),
                 is_init: Arc::new(AtomicBool::from(is_init)),
             }))
@@ -82,6 +82,6 @@ pub type State = Arc<AppState>;
 pub struct AppState {
     pub db: PgPool,
     pub urls: Arc<DashMap<String, String>>,
-    pub tokens: Arc<DashMap<String, String>>,
+    pub tokens: Arc<DashSet<String>>,
     pub is_init: Arc<AtomicBool>,
 }

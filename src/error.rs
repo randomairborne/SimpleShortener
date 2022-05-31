@@ -9,11 +9,14 @@ use std::borrow::Cow;
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
 pub enum WebServerError {
+    // Errors a user could cause
     IncorrectAuth,
     NotFound,
     UrlConflict,
     UrlDisallowed,
+    InvalidUsernameOrPassword,
 
+    // Internal server errors
     Db(sqlx::Error),
     InvalidUri(InvalidUri),
     Bmp(BmpError),
@@ -54,6 +57,10 @@ impl axum::response::IntoResponse for WebServerError {
             WebServerError::IncorrectAuth => {
                 ("Authentication failed".into(), StatusCode::UNAUTHORIZED)
             }
+            WebServerError::InvalidUsernameOrPassword => (
+                "Username or password incorrect!".into(),
+                StatusCode::UNAUTHORIZED,
+            ),
             WebServerError::UrlConflict => (
                 "Short URL conflicts with already-existing url, try editing instead".into(),
                 StatusCode::CONFLICT,

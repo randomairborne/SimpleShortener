@@ -62,6 +62,13 @@ pub fn makeapp(state: crate::State) -> Router {
             }),
         )
         .route(
+            "/simpleshortener/api/token/invalidate/:token",
+            post({
+                let state = state.clone();
+                move |path| users::invalidate(path, state)
+            }),
+        )
+        .route(
             "/simpleshortener/api/create",
             post({
                 let state = state.clone();

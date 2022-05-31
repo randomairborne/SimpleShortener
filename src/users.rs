@@ -1,3 +1,4 @@
+use axum::extract::Path;
 use axum::headers::authorization::Bearer;
 use axum::Json;
 use serde_json::Value;
@@ -30,23 +31,26 @@ pub async fn token(
     .await
     {
         Ok(pw) => pw,
-        Err(sqlx::Error::RowNotFound) => {
-            return Ok(Json(json!({ "error": "Username or password incorrect!" })))
-        }
+        Err(sqlx::Error::RowNotFound) => return Err(WebServerError::InvalidUsernameOrPassword),
         Err(e) => return Err(WebServerError::Db(e)),
     };
     let correct_split = correct_with_salt.password.split('|').collect::<Vec<&str>>();
+    println!("{:#?}", &correct_split);
     let correct_hash = correct_split.get(1).ok_or(WebServerError::NoSalt)?;
     let salt = correct_split.get(0).ok_or(WebServerError::NoSalt)?;
     let provided_password_hash = sha2::Sha512::digest(&format!("{}|{}", salt, password))
         .into_iter()
         .map(|x| format!("{:02x}", x))
         .collect::<String>();
-    if *correct_hash == provided_password_hash {
-        return Ok(Json(json!({ "error": "Username or password incorrect!" })));
+    println!(
+        "Correct hash: {}|\nProvided hash: {}|",
+        *correct_hash, provided_password_hash
+    );
+    if *correct_hash != provided_password_hash {
+        return Err(WebServerError::InvalidUsernameOrPassword);
     };
     let token = crate::randstr();
-    state.tokens.insert(username, token.clone());
+    state.tokens.insert(token.clone());
     Ok(Json(json!({ "token": token })))
 }
 
@@ -55,6 +59,7 @@ pub async fn setup(
     state: crate::State,
 ) -> Result<Json<Value>, WebServerError> {
     let salt = crate::randstr();
+    trace!("{}", &salt);
     let password_hash = sha2::Sha512::digest(&format!("{}|{}", &salt, password))
         .into_iter()
         .map(|x| format!("{:02x}", x))
@@ -73,4 +78,10 @@ pub async fn setup(
     .await?;
     state.is_init.store(true, Ordering::Relaxed);
     Ok(Json(json!({"message":"Account added!"})))
+}
+
+#[allow(clippy::unused_async)]
+pub async fn invalidate(Path(path): Path<String>, state: crate::State) -> Json<Value> {
+    state.tokens.remove(&path);
+    Json(json!({"message": "Token invalidated!"}))
 }

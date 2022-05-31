@@ -11,7 +11,7 @@ categories = ["web-programming::http-server"]
 
 [dependencies]
 axum = { version = "0.5", features = ["json", "http2", "headers"] }
-axum-macros = "0.2"
+dashmap = { version = "5.2", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.10"
@@ -20,8 +20,6 @@ tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "fs"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "macros", "postgres", "offline"] }
-dashmap = { version = "5.0", features = ["serde"] }
-parking_lot = "0.12"
 qr_code = { version = "1.1", features = ["bmp"] }
 
 
