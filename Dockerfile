@@ -1,6 +1,6 @@
 FROM rust:alpine as build
 
-WORKDIR /
+WORKDIR /build
 
 ENV SQLX_OFFLINE=true
 ENV RUSTFLAGS="--emit=asm"
@@ -15,10 +15,10 @@ FROM alpine
 
 WORKDIR /
 
-COPY --from=build /simpleshortener/target/release/simpleshortener .
+COPY --from=build /build/target/release/simpleshortener /usr/bin/simpleshortener
 
 USER 9999
 EXPOSE 8080
 ENV log=warn
 
-CMD ["./simpleshortener"]
+CMD ["simpleshortener"]
