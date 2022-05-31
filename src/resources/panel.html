@@ -189,7 +189,7 @@
     try {
       response = await fetch(apiLocation + "token", {
         method: 'POST',
-        headers: { username: username, password: password },
+        body: JSON.stringify({ "username": username, "password": password }),
       });
     } catch (e) {
       statusElement.innerHTML =
@@ -206,7 +206,7 @@
       return;
     }
     statusElement.innerHTML = "logged in successfully!";
-    token = data['token'];
+    token = 'Bearer ' + data['token'];
     await populateLinks();
   };
 

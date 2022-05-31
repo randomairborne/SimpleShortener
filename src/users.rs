@@ -1,62 +1,27 @@
-use axum::http::HeaderMap;
+use axum::headers::authorization::Bearer;
 use axum::Json;
-use dashmap::DashMap;
 use serde_json::Value;
 use sha2::Digest;
 
 use crate::error::WebServerError;
-use crate::structs::AddUser;
+use crate::structs::LogIn;
 use std::sync::atomic::Ordering;
-use std::sync::Arc;
-pub struct Authorization;
 
-#[async_trait::async_trait]
-impl<T: Send> axum::extract::FromRequest<T> for Authorization {
-    type Rejection = WebServerError;
-    async fn from_request(
-        req: &mut axum::extract::RequestParts<T>,
-    ) -> Result<Self, Self::Rejection> {
-        let headers = req.headers();
-        let provided_token = String::from_utf8(
-            headers
-                .get("Authorization")
-                .ok_or(WebServerError::BadRequest)?
-                .as_bytes()
-                .into(),
-        )
-        .map_err(|_| WebServerError::BadRequest)?;
-        let tokens = req
-            .extensions()
-            .get::<Arc<DashMap<String, String>>>()
-            .ok_or(WebServerError::MissingExtensions)?;
-
-        trace!("Tokens: {:?}", &tokens);
-        if tokens.get(&provided_token).is_some() {
-            Ok(Self)
-        } else {
-            Err(WebServerError::IncorrectAuth)
-        }
+/// This functiion checks the state to see if the Bearer authtoken is in the token DB.
+pub fn authenticate(auth: &Bearer, state: &crate::State) -> Result<(), WebServerError> {
+    trace!("Tokens: {:?}", &state.tokens);
+    if state.tokens.get(auth.token()).is_some() {
+        Ok(())
+    } else {
+        Err(WebServerError::IncorrectAuth)
     }
 }
 
 #[allow(clippy::unused_async)]
-pub async fn token(headers: HeaderMap, state: crate::State) -> Result<Json<Value>, WebServerError> {
-    let username = String::from_utf8(
-        headers
-            .get("username")
-            .ok_or(WebServerError::BadRequest)?
-            .as_bytes()
-            .into(),
-    )
-    .map_err(|_| WebServerError::BadRequest)?;
-    let password = String::from_utf8(
-        headers
-            .get("password")
-            .ok_or(WebServerError::BadRequest)?
-            .as_bytes()
-            .into(),
-    )
-    .map_err(|_| WebServerError::BadRequest)?;
+pub async fn token(
+    Json(LogIn { username, password }): Json<LogIn>,
+    state: crate::State,
+) -> Result<Json<Value>, WebServerError> {
     let correct_with_salt = match query!(
         "SELECT password FROM accounts WHERE username = $1",
         &username
@@ -86,7 +51,7 @@ pub async fn token(headers: HeaderMap, state: crate::State) -> Result<Json<Value
 }
 
 pub async fn setup(
-    Json(AddUser { username, password }): Json<AddUser>,
+    Json(LogIn { username, password }): Json<LogIn>,
     state: crate::State,
 ) -> Result<Json<Value>, WebServerError> {
     let salt = crate::randstr();

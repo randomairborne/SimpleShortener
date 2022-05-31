@@ -6,11 +6,11 @@ mod files;
 mod redirect_handler;
 mod structs;
 mod users;
-use std::sync::{atomic::AtomicBool, Arc};
 
 use dashmap::DashMap;
 use rand::Rng;
 use sqlx::PgPool;
+use std::sync::{atomic::AtomicBool, Arc};
 
 #[macro_use]
 extern crate sqlx;
@@ -48,19 +48,15 @@ async fn main() {
         .fetch_one(&db)
         .await
         .is_ok();
-    let tokens: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
     println!("[SimpleShortener] Listening on http://broadcasthost:8080");
     axum::Server::bind(&([0, 0, 0, 0], 8080).into())
         .serve(
-            app::makeapp(
-                tokens,
-                Arc::new(AppState {
-                    db,
-                    tokens: Arc::new(DashMap::new()),
-                    urls: Arc::new(urls),
-                    is_init: Arc::new(AtomicBool::from(is_init)),
-                }),
-            )
+            app::makeapp(Arc::new(AppState {
+                db,
+                tokens: Arc::new(DashMap::new()),
+                urls: Arc::new(urls),
+                is_init: Arc::new(AtomicBool::from(is_init)),
+            }))
             .into_make_service(),
         )
         .await
@@ -80,13 +76,12 @@ pub fn randstr() -> String {
     result
 }
 
-type IsInit = Arc<AtomicBool>;
-type State = Arc<AppState>;
+pub type State = Arc<AppState>;
 
 #[derive(Debug, Clone)]
-struct AppState {
+pub struct AppState {
     pub db: PgPool,
     pub urls: Arc<DashMap<String, String>>,
     pub tokens: Arc<DashMap<String, String>>,
-    pub is_init: IsInit,
+    pub is_init: Arc<AtomicBool>,
 }

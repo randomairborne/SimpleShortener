@@ -10,7 +10,6 @@ use std::borrow::Cow;
 #[derive(Debug)]
 pub enum WebServerError {
     IncorrectAuth,
-    BadRequest,
     NotFound,
     UrlConflict,
     UrlDisallowed,
@@ -21,7 +20,6 @@ pub enum WebServerError {
     Qr(QrError),
 
     InvalidRedirectUri,
-    MissingExtensions,
     NoSalt,
 }
 
@@ -56,10 +54,6 @@ impl axum::response::IntoResponse for WebServerError {
             WebServerError::IncorrectAuth => {
                 ("Authentication failed".into(), StatusCode::UNAUTHORIZED)
             }
-            WebServerError::BadRequest => (
-                "Missing header or malformed json".into(),
-                StatusCode::BAD_REQUEST,
-            ),
             WebServerError::UrlConflict => (
                 "Short URL conflicts with already-existing url, try editing instead".into(),
                 StatusCode::CONFLICT,
@@ -71,10 +65,6 @@ impl axum::response::IntoResponse for WebServerError {
             WebServerError::UrlDisallowed => (
                 "URL empty or used by the system".into(),
                 StatusCode::CONFLICT,
-            ),
-            WebServerError::MissingExtensions => (
-                "Missing internal request extension(s)".into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
             ),
             WebServerError::NoSalt => (
                 "Internal salt was not found".into(),

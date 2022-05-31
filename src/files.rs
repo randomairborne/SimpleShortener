@@ -9,14 +9,14 @@ crate::static_file!(logo, "resources/logo.png", "image/png");
 
 #[allow(clippy::unused_async)]
 pub async fn panel(
-    is_init: crate::IsInit,
+    state: crate::State,
 ) -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
     let mut headers = axum::http::HeaderMap::new();
     headers.insert(
         axum::http::header::CONTENT_TYPE,
         axum::http::HeaderValue::from_static("text/html"),
     );
-    let file = if is_init.load(std::sync::atomic::Ordering::Relaxed) {
+    let file = if state.is_init.load(std::sync::atomic::Ordering::Relaxed) {
         trace!("Serving standard panel");
         include_str!("resources/panel.html")
     } else {

@@ -17,7 +17,7 @@ pub struct Qr {
 }
 
 #[derive(Deserialize, Clone, Debug)]
-pub struct AddUser {
+pub struct LogIn {
     pub username: String,
     pub password: String,
 }

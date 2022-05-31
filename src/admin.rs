@@ -1,25 +1,31 @@
 use crate::error::WebServerError;
 use crate::structs::{Add, Edit, Qr};
-use crate::users::Authorization;
+use crate::users::authenticate;
 use axum::extract::Path;
+use axum::headers::authorization::Bearer;
+use axum::headers::Authorization;
 use axum::http::header::{HeaderMap, HeaderValue};
 use axum::http::StatusCode;
-use axum::Json;
+use axum::{Json, TypedHeader};
 use serde_json::Value;
 
 static DISALLOWED_SHORTENINGS: [&str; 3] = ["", "favicon.ico", "simpleshortener"];
-
 #[allow(clippy::unused_async)]
-pub async fn list(_: Authorization, state: crate::State) -> Json<Value> {
-    Json(json!({ "links": state.urls }))
+pub async fn list(
+    TypedHeader(Authorization(auth)): TypedHeader<Authorization<Bearer>>,
+    state: crate::State,
+) -> Result<Json<Value>, WebServerError> {
+    authenticate(&auth, &state)?;
+    Ok(Json(json!({ "links": state.urls })))
 }
 
 pub async fn edit(
-    _: Authorization,
     Path(link): Path<String>,
     Json(Edit { destination }): Json<Edit>,
+    TypedHeader(Authorization(auth)): TypedHeader<Authorization<Bearer>>,
     state: crate::State,
 ) -> Result<Json<Value>, WebServerError> {
+    authenticate(&auth, &state)?;
     state
         .urls
         .contains_key(&link)
@@ -37,10 +43,11 @@ pub async fn edit(
 }
 
 pub async fn delete(
-    _: Authorization,
     Path(link): Path<String>,
+    TypedHeader(Authorization(auth)): TypedHeader<Authorization<Bearer>>,
     state: crate::State,
 ) -> Result<Json<Value>, WebServerError> {
+    authenticate(&auth, &state)?;
     state
         .urls
         .contains_key(&link)
@@ -54,13 +61,14 @@ pub async fn delete(
 }
 
 pub async fn add(
-    _: Authorization,
     Json(Add {
         mut link,
         destination,
     }): Json<Add>,
+    TypedHeader(Authorization(auth)): TypedHeader<Authorization<Bearer>>,
     state: crate::State,
 ) -> Result<Json<Value>, WebServerError> {
+    authenticate(&auth, &state)?;
     link = link.to_lowercase();
     (!state.urls.contains_key(&link))
         .then(|| ())
@@ -80,7 +88,10 @@ pub async fn add(
 #[allow(clippy::unused_async)]
 pub async fn generate_qr(
     Json(Qr { destination }): Json<Qr>,
+    TypedHeader(Authorization(auth)): TypedHeader<Authorization<Bearer>>,
+    state: crate::State,
 ) -> Result<(StatusCode, HeaderMap, Vec<u8>), WebServerError> {
+    authenticate(&auth, &state)?;
     let mut headers = HeaderMap::new();
     headers.insert(
         axum::http::header::CONTENT_TYPE,
