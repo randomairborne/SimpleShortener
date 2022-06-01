@@ -2,7 +2,7 @@ FROM rust:alpine as build
 
 WORKDIR /build
 
-ENV SQLX_OFFLINE=true
+ENV SQLX_OFFLINE="true"
 ENV RUSTFLAGS="--emit=asm"
 
 COPY . .
