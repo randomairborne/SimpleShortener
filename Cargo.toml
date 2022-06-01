@@ -21,6 +21,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "macros", "postgres", "offline"] }
 qr_code = { version = "1.1", features = ["bmp"] }
+urlencoding = "2.1"
 
 
 [dev-dependencies]

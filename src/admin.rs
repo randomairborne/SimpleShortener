@@ -19,6 +19,34 @@ pub async fn list(
     Ok(Json(json!({ "links": state.urls })))
 }
 
+pub async fn add(
+    Json(Add {
+        mut link,
+        destination,
+    }): Json<Add>,
+    TypedHeader(Authorization(auth)): TypedHeader<Authorization<Bearer>>,
+    state: crate::State,
+) -> Result<Json<Value>, WebServerError> {
+    authenticate(&auth, &state)?;
+    link = link.to_lowercase();
+    if !link.starts_with('/') {
+        link = format!("/{}", &link);
+    }
+    (!state.urls.contains_key(&link))
+        .then(|| ())
+        .ok_or(WebServerError::UrlConflict)?;
+
+    (!DISALLOWED_SHORTENINGS.contains(&link.as_str()))
+        .then(|| ())
+        .ok_or(WebServerError::UrlDisallowed)?;
+    query!("INSERT INTO urls VALUES ($1, $2)", link, destination)
+        .execute(&state.db)
+        .await?;
+
+    state.urls.insert(link, destination);
+    Ok(Json(json!({"message":"Link added!"})))
+}
+
 pub async fn edit(
     Path(link): Path<String>,
     Json(Edit { destination }): Json<Edit>,
@@ -26,6 +54,7 @@ pub async fn edit(
     state: crate::State,
 ) -> Result<Json<Value>, WebServerError> {
     authenticate(&auth, &state)?;
+    let link = urlencoding::decode(&link)?.to_string();
     state
         .urls
         .contains_key(&link)
@@ -48,6 +77,7 @@ pub async fn delete(
     state: crate::State,
 ) -> Result<Json<Value>, WebServerError> {
     authenticate(&auth, &state)?;
+    let link = urlencoding::decode(&link)?.to_string();
     state
         .urls
         .contains_key(&link)
@@ -58,31 +88,6 @@ pub async fn delete(
         .await?;
     state.urls.remove(&link);
     Ok(Json(json!({"message":"Link removed!"})))
-}
-
-pub async fn add(
-    Json(Add {
-        mut link,
-        destination,
-    }): Json<Add>,
-    TypedHeader(Authorization(auth)): TypedHeader<Authorization<Bearer>>,
-    state: crate::State,
-) -> Result<Json<Value>, WebServerError> {
-    authenticate(&auth, &state)?;
-    link = link.to_lowercase();
-    (!state.urls.contains_key(&link))
-        .then(|| ())
-        .ok_or(WebServerError::UrlConflict)?;
-
-    (!DISALLOWED_SHORTENINGS.contains(&link.as_str()))
-        .then(|| ())
-        .ok_or(WebServerError::UrlDisallowed)?;
-    query!("INSERT INTO urls VALUES ($1, $2)", link, destination)
-        .execute(&state.db)
-        .await?;
-
-    state.urls.insert(link, destination);
-    Ok(Json(json!({"message":"Link added!"})))
 }
 
 #[allow(clippy::unused_async)]

@@ -1,15 +1,14 @@
 use crate::error::WebServerError;
 use crate::State;
-use axum::extract::Path;
 use axum::http::header::CONTENT_TYPE;
-use axum::http::{HeaderMap, HeaderValue, StatusCode};
+use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
 
 #[allow(clippy::unused_async)]
 pub async fn redirect(
-    Path(mut path): Path<String>,
+    req: Request<axum::body::Body>,
     state: State,
 ) -> Result<(StatusCode, HeaderMap, &'static str), WebServerError> {
-    path = path.to_lowercase();
+    let path = req.uri().to_string().to_lowercase();
     let mut headers = HeaderMap::new();
     headers.insert(
         CONTENT_TYPE,

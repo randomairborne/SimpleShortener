@@ -31,15 +31,15 @@ You can add new links by making a `PUT` request to `/simpleshortener/api/add` wi
 
 ## Delete link
 
-You can delete links by making a `DELETE` request to `/simpleshortener/api/delete/<short url>`
+You can delete links by making a `DELETE` request to `/simpleshortener/api/delete/<urlencoded short url>`
 
 ## Edit existing link
 
-You can edit existing links by making a `PATCH` request to `/simpleshortener/api/edit/<short url>` with the JSON data
+You can edit existing links by making a `PATCH` request to `/simpleshortener/api/edit/<urlencoded short url>` with the JSON data
 
 ```json
 {
-  "destination": "https://example.org"  
+  "destination": "https://example.org"
 }
 ```
 

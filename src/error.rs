@@ -5,6 +5,7 @@ use axum::http::HeaderValue;
 use qr_code::bmp_monochrome::BmpError;
 use qr_code::types::QrError;
 use std::borrow::Cow;
+use std::string::FromUtf8Error;
 
 #[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
@@ -21,6 +22,7 @@ pub enum WebServerError {
     InvalidUri(InvalidUri),
     Bmp(BmpError),
     Qr(QrError),
+    FromUtf8(FromUtf8Error),
 
     InvalidRedirectUri,
     NoSalt,
@@ -41,6 +43,12 @@ impl From<axum::http::uri::InvalidUri> for WebServerError {
 impl From<BmpError> for WebServerError {
     fn from(e: BmpError) -> Self {
         Self::Bmp(e)
+    }
+}
+
+impl From<FromUtf8Error> for WebServerError {
+    fn from(e: FromUtf8Error) -> Self {
+        Self::FromUtf8(e)
     }
 }
 
@@ -79,6 +87,10 @@ impl axum::response::IntoResponse for WebServerError {
             ),
             WebServerError::Db(e) => (
                 format!("Database returned an error: {:?}", e).into(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+            WebServerError::FromUtf8(e) => (
+                format!("Error converting to UTF-8: {:?}", e).into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
             WebServerError::InvalidUri(e) => (

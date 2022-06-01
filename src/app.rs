@@ -10,13 +10,6 @@ pub fn makeapp(state: crate::State) -> Router {
                 move || redirect_handler::root(state)
             }),
         )
-        .route(
-            "/:path",
-            get({
-                let state = state.clone();
-                move |path| redirect_handler::redirect(path, state)
-            }),
-        )
         .route("/simpleshortener/api", get(files::doc))
         .route("/simpleshortener/api/", get(files::doc))
         .route(
@@ -82,7 +75,14 @@ pub fn makeapp(state: crate::State) -> Router {
                 move || files::panel(state)
             }),
         )
-        .route("/simpleshortener/", get(move || files::panel(state)))
+        .route(
+            "/simpleshortener/",
+            get({
+                let state = state.clone();
+                move || files::panel(state)
+            }),
+        )
         .route("/simpleshortener/static/link.png", get(files::logo))
         .route("/favicon.ico", get(files::favicon))
+        .fallback(get(move |req| redirect_handler::redirect(req, state)))
 }
