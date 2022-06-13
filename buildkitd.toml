@@ -1,3 +1,3 @@
 [worker.oci]
   enabled = true
-  max-parallelism = 4
+  max-parallelism = 2
