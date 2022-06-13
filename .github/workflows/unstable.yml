@@ -38,4 +38,4 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/${{ env.REPO }}:master
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
