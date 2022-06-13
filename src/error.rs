@@ -61,47 +61,47 @@ impl From<QrError> for WebServerError {
 impl axum::response::IntoResponse for WebServerError {
     fn into_response(self) -> axum::response::Response {
         let (error, status): (Cow<str>, StatusCode) = match self {
-            WebServerError::NotFound => ("Link not found".into(), StatusCode::NOT_FOUND),
-            WebServerError::IncorrectAuth => {
+            Self::NotFound => ("Link not found".into(), StatusCode::NOT_FOUND),
+            Self::IncorrectAuth => {
                 ("Authentication failed".into(), StatusCode::UNAUTHORIZED)
             }
-            WebServerError::InvalidUsernameOrPassword => (
+            Self::InvalidUsernameOrPassword => (
                 "Username or password incorrect!".into(),
                 StatusCode::UNAUTHORIZED,
             ),
-            WebServerError::UrlConflict => (
+            Self::UrlConflict => (
                 "Short URL conflicts with already-existing url, try editing instead".into(),
                 StatusCode::CONFLICT,
             ),
-            WebServerError::InvalidRedirectUri => (
+            Self::InvalidRedirectUri => (
                 "Database returned invalid header".into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
-            WebServerError::UrlDisallowed => (
+            Self::UrlDisallowed => (
                 "URL empty or used by the system".into(),
                 StatusCode::CONFLICT,
             ),
-            WebServerError::NoSalt => (
+            Self::NoSalt => (
                 "Internal salt was not found".into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
-            WebServerError::Db(e) => (
+            Self::Db(e) => (
                 format!("Database returned an error: {:?}", e).into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
-            WebServerError::FromUtf8(e) => (
+            Self::FromUtf8(e) => (
                 format!("Error converting to UTF-8: {:?}", e).into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
-            WebServerError::InvalidUri(e) => (
+            Self::InvalidUri(e) => (
                 format!("The redirect URI is invalid: {:?}", e).into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
-            WebServerError::Bmp(e) => (
+            Self::Bmp(e) => (
                 format!("BMP conversion error: {:?}", e).into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),
-            WebServerError::Qr(e) => (
+            Self::Qr(e) => (
                 format!("QR creation error: {:?}", e).into(),
                 StatusCode::INTERNAL_SERVER_ERROR,
             ),

@@ -1,16 +1,29 @@
-version: "3"
 
+version: "3.7"
 services:
-    simpleshortener:
-        image: ghcr.io/randomairborne/simpleshortener
-        restart: always
-        networks:
-            - simpleshortener
-        ports:
-            # change external port here, not in config.toml
-            - "127.0.0.1:24529:24529"
-        environment:
-            PORT: 24529
-            DATABASE_PATH: /simpleshortener/data.rust-bincode
+  simpleshortener:
+    image: ghcr.io/KeyValueSystems/SimpleShortener
+    restart: always
+    networks:
+      - proxy
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.http.middlewares.simpleshortener-https-redirect.redirectscheme.scheme: https
+        traefik.http.routers.simpleshortener-http.middlewares: simpleshortener-https-redirect
+        traefik.http.routers.simpleshortener-http.entrypoints: http
+        traefik.http.routers.simpleshortener-http.rule: Host(`${HOST}`) || Host(`www.${HOST}`)
+        traefik.http.routers.simpleshortener.entrypoints: https
+        traefik.http.routers.simpleshortener.rule: Host(`${HOST}`) || Host(`www.${HOST}`)
+        traefik.http.routers.simpleshortener.tls.certresolver: letsencrypt
+        traefik.http.services.simpleshortener.loadbalancer.server.port: 8080
+    environment:
+      DATABASE_URL: "postgres://${DB_USER}:${DB_PASSWORD}@${DB_ADDRESS}/${DB_DATABASE}"
+
 networks:
-    simpleshortener:
+  proxy:
+    external: true
+  databased:
+    external: true
+
+    
