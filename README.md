@@ -1,5 +1,5 @@
 # Simple URL shortener
-
+[![Check build](https://github.com/KeyValueSystems/SimpleShortener/actions/workflows/check.yml/badge.svg)](https://github.com/KeyValueSystems/SimpleShortener/actions/workflows/check.yml) [![Unstable release](https://github.com/KeyValueSystems/SimpleShortener/actions/workflows/unstable.yml/badge.svg)](https://github.com/KeyValueSystems/SimpleShortener/actions/workflows/unstable.yml) [![Release](https://github.com/KeyValueSystems/SimpleShortener/actions/workflows/release.yml/badge.svg?branch=production)](https://github.com/KeyValueSystems/SimpleShortener/actions/workflows/release.yml) \
 A very simple URL shortener, which is easy to configure and quite speedy.
 Later it is planned to add some analytics.
 
