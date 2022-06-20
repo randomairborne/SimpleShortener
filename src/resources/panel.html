@@ -289,6 +289,7 @@
     totalUrls = idx;
 
     loginElement.style.display = "none";
+    sortTable();
     panelElement.style.display = null;
   }
 
@@ -322,7 +323,7 @@
     dstElement.value = "";
 
     let linkElement = document.createElement("label");
-    linkElement.innerText = src;
+    linkElement.innerText = "/" + src;
 
     let submitButton = document.createElement("button");
     submitButton.innerHTML = "Update";
@@ -362,6 +363,7 @@
     actionsCellElement.appendChild(qrCodeButton);
 
     totalUrls++;
+    sortTable();
   }
 
   async function updateExisting(element) {
@@ -457,5 +459,28 @@
   document.getElementById("new-link-src").addEventListener("keypress", newLinkKeyPressHandler);
   document.getElementById("new-link-dst").addEventListener("keypress", newLinkKeyPressHandler);
 </script>
-
+<script>
+function sortTable() {
+  var table, rows, switching, i, x, y, shouldSwitch;
+  table = document.getElementById("links-table");
+  switching = true;
+  while (switching) {
+    switching = false;
+    rows = table.rows;
+    for (i = 1; i < (rows.length - 2); i++) {
+      shouldSwitch = false;
+      x = rows[i].getElementsByTagName("TD")[0];
+      y = rows[i + 1].getElementsByTagName("TD")[0];
+      if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+        shouldSwitch = true;
+        break;
+      }
+    }
+    if (shouldSwitch) {
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+    }
+  }
+}
+</script>
 </html>
