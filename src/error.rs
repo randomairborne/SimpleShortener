@@ -62,9 +62,7 @@ impl axum::response::IntoResponse for WebServerError {
     fn into_response(self) -> axum::response::Response {
         let (error, status): (Cow<str>, StatusCode) = match self {
             Self::NotFound => ("Link not found".into(), StatusCode::NOT_FOUND),
-            Self::IncorrectAuth => {
-                ("Authentication failed".into(), StatusCode::UNAUTHORIZED)
-            }
+            Self::IncorrectAuth => ("Authentication failed".into(), StatusCode::UNAUTHORIZED),
             Self::InvalidUsernameOrPassword => (
                 "Username or password incorrect!".into(),
                 StatusCode::UNAUTHORIZED,

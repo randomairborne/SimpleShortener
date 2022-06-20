@@ -26,12 +26,14 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_env("LOG"))
         .init();
-    let db = sqlx::PgPool::connect(
-        &std::env::var("DATABASE_URI")
-            .unwrap_or_else(|_| std::env::var("DATABASE_URL").expect("No database URI")),
-    )
-    .await
-    .expect("Failed to connect to database");
+    let db = sqlx::postgres::PgPoolOptions::new()
+        .max_connections(5)
+        .connect(
+            &std::env::var("DATABASE_URI")
+                .unwrap_or_else(|_| std::env::var("DATABASE_URL").expect("No database URI")),
+        )
+        .await
+        .expect("Failed to connect to database");
     sqlx::migrate!()
         .run(&db)
         .await
