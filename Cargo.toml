@@ -23,6 +23,8 @@ sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "macros", "pos
 qr_code = { version = "1.1", features = ["bmp"] }
 urlencoding = "2.1"
 
+[workspace]
+members = ["tests"]
 
 [dev-dependencies]
 tower = "0.4"
