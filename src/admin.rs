@@ -39,7 +39,7 @@ pub async fn add(
     (!DISALLOWED_SHORTENINGS.contains(&link.as_str()))
         .then(|| ())
         .ok_or(WebServerError::UrlDisallowed)?;
-    query!("INSERT INTO urls VALUES ($1, $2)", link, destination)
+    sqlx::query!("INSERT INTO urls VALUES ($1, $2)", link, destination)
         .execute(&state.db)
         .await?;
 

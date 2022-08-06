@@ -1,116 +1,103 @@
 {
-  "db": "PostgreSQL",
+  "db": "SQLite",
   "0742fd3288d66361283bf97187c3c40ae65361548fd126e6d2d8c7d6c874a25a": {
-    "query": "DELETE FROM urls WHERE link = $1",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": []
-    }
-  },
-  "157d124763f492d0dfbf75d6a25943e7652b9be1a65347a1b629d137b1ddb394": {
-    "query": "INSERT INTO accounts VALUES ($1, $2)",
-    "describe": {
-      "columns": [],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Varchar"
-        ]
-      },
-      "nullable": []
-    }
+        "Right": 1
+      }
+    },
+    "query": "DELETE FROM urls WHERE link = $1"
   },
   "25763ef930a6fd47dc46ef1dbf27ebdb81ccbda7f5f1a47ff2b50df90f4d1402": {
-    "query": "UPDATE urls SET destination = $1 WHERE link = $2",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
-        "Left": [
-          "Varchar",
-          "Text"
-        ]
-      },
-      "nullable": []
-    }
+        "Right": 2
+      }
+    },
+    "query": "UPDATE urls SET destination = $1 WHERE link = $2"
   },
   "40f032a6e42d1f0e19d8a12e45bb96bafd17b7be7ad1b7936297ce4e0eeb057c": {
-    "query": "INSERT INTO urls VALUES ($1, $2)",
     "describe": {
       "columns": [],
+      "nullable": [],
       "parameters": {
-        "Left": [
-          "Varchar",
-          "Varchar"
-        ]
-      },
-      "nullable": []
-    }
+        "Right": 2
+      }
+    },
+    "query": "INSERT INTO urls VALUES ($1, $2)"
   },
   "51381d3a7ce0220d7653e56ff5cabfe206aeb749b8b27d690c932192bb110f57": {
-    "query": "SELECT * FROM urls",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "link",
-          "type_info": "Varchar"
+          "ordinal": 0,
+          "type_info": "Text"
         },
         {
-          "ordinal": 1,
           "name": "destination",
-          "type_info": "Varchar"
+          "ordinal": 1,
+          "type_info": "Text"
         }
       ],
-      "parameters": {
-        "Left": []
-      },
       "nullable": [
         false,
         false
-      ]
-    }
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "SELECT * FROM urls"
+  },
+  "548c631c3e4fb4f9d95340331ff92a641294cfbf439f5b196e70d686d29f890e": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 2
+      }
+    },
+    "query": "INSERT INTO accounts VALUES (?, ?)"
   },
   "8d21ad87723bf7f5c34a872ec14c6ce1ae58699865eac51941c9d86d0a4afae5": {
-    "query": "SELECT password FROM accounts WHERE username = $1",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "password",
-          "type_info": "Varchar"
+          "ordinal": 0,
+          "type_info": "Text"
         }
       ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
       "nullable": [
         false
-      ]
-    }
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "SELECT password FROM accounts WHERE username = $1"
   },
   "a421e5ad9df286592096361a8ac905820ed9fcf06d4ca050e53c0b3e689125a4": {
-    "query": "SELECT username FROM accounts",
     "describe": {
       "columns": [
         {
-          "ordinal": 0,
           "name": "username",
-          "type_info": "Varchar"
+          "ordinal": 0,
+          "type_info": "Text"
         }
       ],
-      "parameters": {
-        "Left": []
-      },
       "nullable": [
         false
-      ]
-    }
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "SELECT username FROM accounts"
   }
 }

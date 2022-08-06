@@ -1,8 +1,8 @@
-name: Build Production
+name: Build Unstable
 on:
   push:
     branches:
-      - production
+      - master
 
 jobs:
   build:
@@ -32,5 +32,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ env.REPO }}:latest
-          platforms: linux/amd64
+          tags: ghcr.io/${{ env.REPO }}
+          platforms: linux/amd64,linux/arm64

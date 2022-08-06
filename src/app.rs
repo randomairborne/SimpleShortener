@@ -51,7 +51,7 @@ pub fn makeapp(state: crate::State) -> Router {
             "/simpleshortener/api/token",
             post({
                 let state = state.clone();
-                move |headers| users::token(headers, state)
+                move |headers| users::login(headers, state)
             }),
         )
         .route(

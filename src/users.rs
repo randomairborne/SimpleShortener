@@ -6,6 +6,7 @@ use sha2::Digest;
 
 use crate::error::WebServerError;
 use crate::structs::LogIn;
+use crate::State;
 use std::sync::atomic::Ordering;
 
 /// This functiion checks the state to see if the Bearer authtoken is in the token DB.
@@ -18,14 +19,13 @@ pub fn authenticate(auth: &Bearer, state: &crate::State) -> Result<(), WebServer
     }
 }
 
-#[allow(clippy::unused_async)]
-pub async fn token(
+pub async fn login(
     Json(LogIn { username, password }): Json<LogIn>,
-    state: crate::State,
+    state: State,
 ) -> Result<Json<Value>, WebServerError> {
     let correct_with_salt = match query!(
         "SELECT password FROM accounts WHERE username = $1",
-        &username
+        username
     )
     .fetch_one(&state.db)
     .await
@@ -44,9 +44,13 @@ pub async fn token(
     if *correct_hash != provided_password_hash {
         return Err(WebServerError::InvalidUsernameOrPassword);
     };
+    Ok(Json(json!({ "token": token_gen(&state) })))
+}
+
+fn token_gen(state: &State) -> String {
     let token = crate::randstr();
     state.tokens.insert(token.clone());
-    Ok(Json(json!({ "token": token })))
+    token
 }
 
 pub async fn setup(
@@ -63,15 +67,14 @@ pub async fn setup(
         "Creating new user with username {} and password hash `{}|{}`",
         &username, &salt, &password_hash
     );
-    query!(
-        "INSERT INTO accounts VALUES ($1, $2)",
-        username,
-        &format!("{}|{}", &salt, password_hash)
-    )
-    .execute(&state.db)
-    .await?;
+    let salty = format!("{}|{}", &salt, password_hash);
+    query!("INSERT INTO accounts VALUES (?, ?)", username, salty)
+        .execute(&state.db)
+        .await?;
     state.is_init.store(true, Ordering::Relaxed);
-    Ok(Json(json!({"message":"Account added!"})))
+    Ok(Json(
+        json!({"message":"Account added!", "token": token_gen(&state)}),
+    ))
 }
 
 #[allow(clippy::unused_async)]

@@ -9,8 +9,11 @@ mod users;
 
 use dashmap::{DashMap, DashSet};
 use rand::Rng;
-use sqlx::PgPool;
-use std::sync::{atomic::AtomicBool, Arc};
+use sqlx::SqlitePool;
+use std::{
+    str::FromStr,
+    sync::{atomic::AtomicBool, Arc},
+};
 
 #[macro_use]
 extern crate sqlx;
@@ -26,12 +29,15 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_env("LOG"))
         .init();
-    let db = sqlx::postgres::PgPoolOptions::new()
+    let db_path =
+        std::path::PathBuf::from_str(&std::env::var("DATABASE").expect("DATABASE not set!"))
+            .expect("DATABASE should be a path");
+    if !db_path.exists() {
+        std::fs::File::create(&db_path).expect("Failed to create database");
+    }
+    let db = sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(5)
-        .connect(
-            &std::env::var("DATABASE_URI")
-                .unwrap_or_else(|_| std::env::var("DATABASE_URL").expect("No database URI")),
-        )
+        .connect(&format!("sqlite://{}", db_path.display()))
         .await
         .expect("Failed to connect to database");
     sqlx::migrate!()
@@ -42,7 +48,7 @@ async fn main() {
         .fetch_all(&db)
         .await
         .expect("Failed to select from URLs");
-    let urls: DashMap<String, String> = DashMap::new();
+    let urls: DashMap<String, String> = DashMap::with_capacity(urls_mangled.capacity());
     for pair in urls_mangled {
         urls.insert(pair.link, pair.destination);
     }
@@ -50,17 +56,21 @@ async fn main() {
         .fetch_one(&db)
         .await
         .is_ok();
-    println!("[SimpleShortener] Listening on http://broadcasthost:8080");
+    let state = Arc::new(AppState {
+        db,
+        tokens: Arc::new(DashSet::new()),
+        urls: Arc::new(urls),
+        is_init: Arc::new(AtomicBool::from(is_init)),
+    });
+    println!("[SimpleShortener] Listening on http://127.0.0.1:8080");
     axum::Server::bind(&([0, 0, 0, 0], 8080).into())
-        .serve(
-            app::makeapp(Arc::new(AppState {
-                db,
-                tokens: Arc::new(DashSet::new()),
-                urls: Arc::new(urls),
-                is_init: Arc::new(AtomicBool::from(is_init)),
-            }))
-            .into_make_service(),
-        )
+        .serve(app::makeapp(state.clone()).into_make_service())
+        .with_graceful_shutdown(async {
+            tokio::signal::ctrl_c().await.ok();
+            println!("Cleaning up...");
+            state.db.close().await;
+            println!("Goodbye!");
+        })
         .await
         .expect("Failed to await main HTTP process");
 }
@@ -82,7 +92,7 @@ pub type State = Arc<AppState>;
 
 #[derive(Debug, Clone)]
 pub struct AppState {
-    pub db: PgPool,
+    pub db: SqlitePool,
     pub urls: Arc<DashMap<String, String>>,
     pub tokens: Arc<DashSet<String>>,
     pub is_init: Arc<AtomicBool>,

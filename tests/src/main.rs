@@ -1,6 +1,6 @@
 mod staticfiles;
 
-use reqwest::{Client, header::HeaderMap};
+use reqwest::{header::HeaderMap, Client};
 use serde_json::json;
 
 #[tokio::main]
@@ -59,8 +59,11 @@ async fn get_token(client: &Client) -> String {
 
 async fn link_actions(token: &str) {
     let headers = HeaderMap::new();
-    headers.append("Authorization", HeaderValue::from("Bearer".to_owned() + token));
+    headers.append(
+        "Authorization",
+        HeaderValue::from("Bearer".to_owned() + token),
+    );
     let client = Client::builder().default_headers(headers).build().unwrap();
-    println!("Testing link addition")
-    client.post("http://localhost:8080/simpleshortener/api/add")
+    println!("Testing link addition");
+    client.post("http://localhost:8080/simpleshortener/api/add");
 }
