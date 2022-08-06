@@ -19,7 +19,7 @@ COPY --from=build /build/target/release/simpleshortener /usr/bin/simpleshortener
 USER 9999
 EXPOSE 8080
 ENV log=warn
-ENV DATABASE_URL=sqlite://links.db
+ENV DATABASE_URL=sqlite:///data/links.db
 VOLUME [ "/data" ]
 
 CMD ["simpleshortener"]

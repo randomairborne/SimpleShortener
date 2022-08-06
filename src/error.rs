@@ -24,7 +24,6 @@ pub enum WebServerError {
     Qr(QrError),
     FromUtf8(FromUtf8Error),
 
-    InvalidRedirectUri,
     NoSalt,
 }
 
@@ -70,10 +69,6 @@ impl axum::response::IntoResponse for WebServerError {
             Self::UrlConflict => (
                 "Short URL conflicts with already-existing url, try editing instead".into(),
                 StatusCode::CONFLICT,
-            ),
-            Self::InvalidRedirectUri => (
-                "Database returned invalid header".into(),
-                StatusCode::INTERNAL_SERVER_ERROR,
             ),
             Self::UrlDisallowed => (
                 "URL empty or used by the system".into(),

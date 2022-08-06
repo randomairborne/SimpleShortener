@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   simpleshortener:
-    image: ghcr.io/KeyValueSystems/SimpleShortener
+    image: ghcr.io/randomairborne/SimpleShortener
     restart: always
     networks:
       - proxy

@@ -9,7 +9,6 @@ use axum::http::StatusCode;
 use axum::{Json, TypedHeader};
 use serde_json::Value;
 
-static DISALLOWED_SHORTENINGS: [&str; 3] = ["", "favicon.ico", "simpleshortener"];
 #[allow(clippy::unused_async)]
 pub async fn list(
     TypedHeader(Authorization(auth)): TypedHeader<Authorization<Bearer>>,
@@ -29,6 +28,9 @@ pub async fn add(
 ) -> Result<Json<Value>, WebServerError> {
     authenticate(&auth, &state)?;
     link = link.to_lowercase();
+    if link == "simpleshortener" {
+        return Err(WebServerError::UrlDisallowed);
+    }
     if !link.starts_with('/') {
         link = format!("/{}", &link);
     }
@@ -36,9 +38,6 @@ pub async fn add(
         .then(|| ())
         .ok_or(WebServerError::UrlConflict)?;
 
-    (!DISALLOWED_SHORTENINGS.contains(&link.as_str()))
-        .then(|| ())
-        .ok_or(WebServerError::UrlDisallowed)?;
     sqlx::query!("INSERT INTO urls VALUES ($1, $2)", link, destination)
         .execute(&state.db)
         .await?;
@@ -108,4 +107,23 @@ pub async fn generate_qr(
     let mut bmp_vec: Vec<u8> = Vec::new();
     bmp.write(&mut bmp_vec)?;
     Ok((StatusCode::OK, headers, bmp_vec))
+}
+
+#[allow(clippy::unused_async)]
+pub async fn panel(
+    state: crate::State,
+) -> (axum::http::StatusCode, axum::http::HeaderMap, &'static str) {
+    let mut headers = axum::http::HeaderMap::new();
+    headers.insert(
+        axum::http::header::CONTENT_TYPE,
+        axum::http::HeaderValue::from_static("text/html"),
+    );
+    let file = if state.is_init.load(std::sync::atomic::Ordering::Relaxed) {
+        trace!("Serving standard panel");
+        include_str!("resources/panel.html")
+    } else {
+        trace!("Serving un-init panel");
+        include_str!("resources/newuser.html")
+    };
+    (axum::http::StatusCode::OK, headers, file)
 }

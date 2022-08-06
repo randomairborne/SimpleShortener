@@ -1,49 +1,39 @@
 use crate::error::WebServerError;
 use crate::State;
-use axum::http::header::CONTENT_TYPE;
-use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
+use axum::http::{Request, StatusCode};
+use axum::response::IntoResponse;
 
 #[allow(clippy::unused_async)]
 pub async fn redirect(
     req: Request<axum::body::Body>,
     state: State,
-) -> Result<(StatusCode, HeaderMap, &'static str), WebServerError> {
+) -> Result<impl IntoResponse, WebServerError> {
     let path = req.uri().to_string().to_lowercase();
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        CONTENT_TYPE,
-        HeaderValue::from_static("text/html; charset=utf-8"),
-    );
     let destination_url = match state.urls.get(&path) {
         Some(dest) => dest,
-        None => return Ok((StatusCode::OK, headers, include_str!("resources/404.html"))),
+        None => {
+            return Ok((
+                StatusCode::OK,
+                [("Content-Type", "text/html".to_string())],
+                include_str!("resources/404.html"),
+            ))
+        }
     };
-    debug!("Path: {}, Destination: {}", path, destination_url.as_str());
-    let destination = match HeaderValue::from_str(destination_url.as_str()) {
-        Ok(dest) => dest,
-        Err(_) => return Err(WebServerError::InvalidRedirectUri),
-    };
-    headers.insert(axum::http::header::LOCATION, destination);
-    Ok((StatusCode::PERMANENT_REDIRECT, headers, ""))
+    debug!("Path: {}, Destination: {}", path, *destination_url);
+    Ok((
+        StatusCode::PERMANENT_REDIRECT,
+        [("Location", destination_url.to_string())],
+        "",
+    ))
 }
 
-// Checks if a specific config var exists or serves the default root
+// Checks if a specific config var exists or ADVERTISEEEEEE
 #[allow(clippy::unused_async)]
-pub async fn root(state: State) -> Result<(StatusCode, HeaderMap, &'static str), WebServerError> {
+pub async fn root(state: State) -> Result<impl IntoResponse, WebServerError> {
     debug!("Handling root request");
-    let mut headers = HeaderMap::new();
-    match state.urls.get("/") {
-        None => {
-            headers.insert(CONTENT_TYPE, HeaderValue::from_static("text/html"));
-            Ok((StatusCode::OK, headers, include_str!("resources/root.html")))
-        }
-        Some(root) => {
-            let destination = match HeaderValue::from_str(root.as_str()) {
-                Ok(dest) => dest,
-                Err(_) => return Err(WebServerError::InvalidRedirectUri),
-            };
-            headers.insert(axum::http::header::LOCATION, destination);
-            Ok((StatusCode::PERMANENT_REDIRECT, headers, ""))
-        }
-    }
+    let root = match state.urls.get("") {
+        Some(url) => url.to_string(),
+        None => "https://github.com/randomairborne/simpleshortener".to_string(),
+    };
+    Ok((StatusCode::PERMANENT_REDIRECT, [("Location", root)], ""))
 }

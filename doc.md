@@ -4,7 +4,7 @@ This file is not needed to compile the app. It's generated with https://dillinge
 
 # SimpleShortener Docs
 
-### If you just wish to add links, and not automate things, see [the panel](/simpleshortener/)  .
+### If you just wish to add links, and not automate things, see /simpleshortner/  .
 
 ## Authentication
 

@@ -1,4 +1,4 @@
-use crate::{admin, files, redirect_handler, users};
+use crate::{admin, redirect_handler, users};
 use axum::routing::{delete, get, patch, post, put, Router};
 
 pub fn makeapp(state: crate::State) -> Router {
@@ -10,79 +10,81 @@ pub fn makeapp(state: crate::State) -> Router {
                 move || redirect_handler::root(state)
             }),
         )
-        .route("/simpleshortener/api", get(files::doc))
-        .route("/simpleshortener/api/", get(files::doc))
+        .nest("/simpleshortener/", makeapi(&state))
+        .fallback(get(move |req| redirect_handler::redirect(req, state)))
+}
+fn makeapi(state: &crate::State) -> Router {
+    Router::new()
         .route(
-            "/simpleshortener/api/edit/:id",
+            "/",
+            get({
+                let state = state.clone();
+                move || admin::panel(state)
+            }),
+        )
+        .route(
+            "/api/edit/:id",
             patch({
                 let state = state.clone();
                 move |path, json, auth| admin::edit(path, json, auth, state)
             }),
         )
         .route(
-            "/simpleshortener/api/delete/:id",
+            "/api/delete/:id",
             delete({
                 let state = state.clone();
                 move |path, auth| admin::delete(path, auth, state)
             }),
         )
         .route(
-            "/simpleshortener/api/add",
+            "/api/add",
             put({
                 let state = state.clone();
                 move |json, auth| admin::add(json, auth, state)
             }),
         )
         .route(
-            "/simpleshortener/api/list",
+            "/api/list",
             get({
                 let state = state.clone();
                 move |auth| admin::list(auth, state)
             }),
         )
         .route(
-            "/simpleshortener/api/qr",
+            "/api/qr",
             post({
                 let state = state.clone();
                 move |json, auth| admin::generate_qr(json, auth, state)
             }),
         )
         .route(
-            "/simpleshortener/api/token",
+            "/api/token",
             post({
                 let state = state.clone();
                 move |headers| users::login(headers, state)
             }),
         )
         .route(
-            "/simpleshortener/api/token/invalidate/:token",
+            "/api/token/invalidate/:token",
             post({
                 let state = state.clone();
                 move |path| users::invalidate(path, state)
             }),
         )
         .route(
-            "/simpleshortener/api/create",
+            "/api/create",
             post({
                 let state = state.clone();
                 move |json| users::setup(json, state)
             }),
         )
         .route(
-            "/simpleshortener",
-            get({
-                let state = state.clone();
-                move || files::panel(state)
+            "/static/panel.js",
+            get(|| async {
+                (
+                    [("Content-Type", "text/html")],
+                    include_str!("resources/panel.js"),
+                )
             }),
         )
-        .route(
-            "/simpleshortener/",
-            get({
-                let state = state.clone();
-                move || files::panel(state)
-            }),
-        )
-        .route("/simpleshortener/static/link.png", get(files::logo))
-        .route("/favicon.ico", get(files::favicon))
-        .fallback(get(move |req| redirect_handler::redirect(req, state)))
 }

@@ -2,7 +2,6 @@
 mod admin;
 mod app;
 mod error;
-mod files;
 mod redirect_handler;
 mod structs;
 mod users;
