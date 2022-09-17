@@ -1,5 +1,8 @@
 # Simple URL shortener
 [![Check build](https://github.com/randomairborne/SimpleShortener/actions/workflows/check.yml/badge.svg)](https://github.com/randomairborne/SimpleShortener/actions/workflows/check.yml) [![Release build](https://github.com/randomairborne/SimpleShortener/actions/workflows/release.yml/badge.svg)](https://github.com/randomairborne/SimpleShortener/actions/workflows/release.yml)
+<br>
+## !!!! This is no longer maintained. Please use [shortify](https://github.com/randomairborne/shortify) instead.
+<br>
 A very simple URL shortener, which is easy to configure and quite speedy.
 Later it is planned to add some analytics.
 
